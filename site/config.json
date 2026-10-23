@@ -1,0 +1,11 @@
+{
+  "app_version": 1,
+  "sheet_id": "1rObft7YnMoX0IRuOAGD72GocxPN9oneA4oePwDRIDuU",
+  "sheet_csv_gviz": "https://docs.google.com/spreadsheets/d/SHEET_ID/gviz/tq?tqx=out:csv&headers=1&sheet={sheet}",
+  "sheet_csv_published": {},
+  "upload_url": "https://script.google.com/macros/s/AKfycbwoPdmYEHRCV1qTrKt_zruRIeg5SJO5MvlpbaTCURzHmgF6LlFkcvhvpJGjXe4zUKXv/exec",
+  "app_key": "wp_2026_1d05cfb1e133cfd8",
+  "archive_mime": "image/png",
+  "csv_timeout_ms": 6000,
+  "upload_timeout_ms": 90000
+}

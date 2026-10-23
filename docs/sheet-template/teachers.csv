@@ -1,0 +1,6 @@
+teacher_id,school_id,display_name,phone,sort_order,active
+#แถวนี้ถูกข้าม: phone เป็น Plain text; ว่างได้,,,,,
+changkon8-01,changkon8,ส.ต.ท.รัชเดช ศรีแก้ว,0812345678,1,TRUE
+changkon8-02,changkon8,นางสาวสุทัตตา เกษี,,2,TRUE
+changkon8-03,changkon8,นายปริญญา นวลสี,,3,TRUE
+changkon8-04,changkon8,นางกัณหา อันทะปัญญา,,4,TRUE

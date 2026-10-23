@@ -1,0 +1,90 @@
+{
+  "schools": [
+    {
+      "school_id": "changkon8",
+      "short_name": "ช่างกล8",
+      "name_full": "โรงเรียนตำรวจตระเวนชายแดนช่างกลปทุมวันอนุสรณ์ 8",
+      "address": "บ้านโนนอุดมดี ต.ดอนเตย อ.นาทม จ.นครพนม 48140",
+      "province": "np",
+      "logo_file": "changkon8.v1.webp",
+      "default_bg": "np-01",
+      "sort_order": 1
+    }
+  ],
+  "teachersBySchool": {
+    "changkon8": [
+      {
+        "teacher_id": "changkon8-01",
+        "school_id": "changkon8",
+        "display_name": "ส.ต.ท.รัชเดช ศรีแก้ว"
+      },
+      {
+        "teacher_id": "changkon8-02",
+        "school_id": "changkon8",
+        "display_name": "นางสาวสุทัตตา เกษี"
+      },
+      {
+        "teacher_id": "changkon8-03",
+        "school_id": "changkon8",
+        "display_name": "นายปริญญา นวลสี"
+      },
+      {
+        "teacher_id": "changkon8-04",
+        "school_id": "changkon8",
+        "display_name": "นางกัณหา อันทะปัญญา"
+      }
+    ]
+  },
+  "labels": [
+    {
+      "label": "อาคารเรียน",
+      "icon": "building"
+    },
+    {
+      "label": "สนามกีฬา / พื้นที่กิจกรรม",
+      "icon": "field"
+    },
+    {
+      "label": "แปลงเกษตรโรงเรียน",
+      "icon": "farm"
+    },
+    {
+      "label": "โรงอาหาร",
+      "icon": "canteen"
+    },
+    {
+      "label": "ห้องเรียน",
+      "icon": "classroom"
+    },
+    {
+      "label": "กิจกรรมหน้าเสาธง",
+      "icon": "flag"
+    },
+    {
+      "label": "ทางเดินอาคารเรียน",
+      "icon": "walkway"
+    },
+    {
+      "label": "ห้องสมุด",
+      "icon": "library"
+    },
+    {
+      "label": "บ้านพักครู",
+      "icon": "building"
+    },
+    {
+      "label": "รั้วและบริเวณโรงเรียน",
+      "icon": "fence"
+    }
+  ],
+  "settings": {
+    "notice_text": "",
+    "notice_level": "info",
+    "upload_enabled": "TRUE",
+    "min_app_version": "1",
+    "title_text": "รายงานภาพบรรยากาศและบริบทโรงเรียน",
+    "share_title": "วันเพจครูเวร",
+    "share_text_template": "วันเพจ {short_name} {date_th}",
+    "data_version": "20261023"
+  }
+}

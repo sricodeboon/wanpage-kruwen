@@ -1,0 +1,12 @@
+label,icon,sort_order,active
+#แถวนี้ถูกข้าม: icon = building field farm canteen classroom flag walkway library kitchen toilet fence camera (ว่าง = camera),,,
+อาคารเรียน,building,1,TRUE
+สนามกีฬา / พื้นที่กิจกรรม,field,2,TRUE
+แปลงเกษตรโรงเรียน,farm,3,TRUE
+โรงอาหาร,canteen,4,TRUE
+ห้องเรียน,classroom,5,TRUE
+กิจกรรมหน้าเสาธง,flag,6,TRUE
+ทางเดินอาคารเรียน,walkway,7,TRUE
+ห้องสมุด,library,8,TRUE
+บ้านพักครู,building,9,TRUE
+รั้วและบริเวณโรงเรียน,fence,10,TRUE

@@ -1,0 +1,13 @@
+node_modules/
+assets/backgrounds/*.png
+assets/refs/*.jpg
+assets/mascots/*.png
+.clasp.json
+test-results/
+playwright-report/
+.superpowers/
+.venv-fonts/
+tests/golden/actual/
+# ภาพที่มีเบอร์โทรจริงของครูแจ็ก — เก็บในเครื่องเท่านั้น ไม่ขึ้น git
+assets/reference/onepage-b-2026-10-23.png
+docs/mockup/mockup.png

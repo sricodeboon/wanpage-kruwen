@@ -1,0 +1,3 @@
+school_id,short_name,name_full,address,province,logo_file,default_bg,sort_order,active,drive_folder_id,today_count,last_report_ts
+#แถวนี้ถูกข้าม: school_id=slug a-z0-9_ ห้ามเปลี่ยนหลังใช้; province=np|sn|mdh; today_count/last_report_ts/drive_folder_id ระบบ (Apps Script) เขียนกลับ,,,,,,,,,,,
+changkon8,ช่างกล8,โรงเรียนตำรวจตระเวนชายแดนช่างกลปทุมวันอนุสรณ์ 8,บ้านโนนอุดมดี ต.ดอนเตย อ.นาทม จ.นครพนม 48140,np,changkon8.v1.webp,np-01,1,TRUE,,,

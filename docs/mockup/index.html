@@ -1,0 +1,122 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><title>วันเพจครูเวร — ตัวอย่างหน้าจอ</title>
+<style>
+:root{--p1:#3b1470;--p2:#5b2a9e;--p3:#7d4bc4;--gold:#d9a93a;--gold2:#f6d983;--paper:#f7f3fc;--line:#e4dbf3}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Sukhumvit Set","Kanit",sans-serif;background:#ece6f6;color:#2a1650;padding:28px 24px}
+h1{text-align:center;font-size:30px;color:var(--p1);margin-bottom:4px}
+.sub{text-align:center;color:#5b4a7a;margin-bottom:22px;font-size:17px}
+.row{display:flex;gap:26px;justify-content:center}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.step{background:var(--p1);color:#fff;border-radius:20px;padding:6px 16px;font-weight:700;font-size:17px}
+.cap{width:330px;text-align:center;font-size:15px;color:#4a3a68;line-height:1.45}
+.phone{width:330px;height:690px;border-radius:40px;background:#111;padding:12px;box-shadow:0 18px 40px #3b147044}
+.scr{width:100%;height:100%;border-radius:30px;overflow:hidden;background:var(--paper);position:relative;font-size:15px}
+.bar{height:26px;display:flex;justify-content:space-between;padding:6px 20px 0;font-size:12px;font-weight:700}
+.head{display:flex;align-items:center;gap:10px;padding:8px 14px 10px;background:#fff;border-bottom:1px solid var(--line)}
+.head img{height:40px}
+.head b{font-size:16px;color:var(--p1);display:block}.head small{color:var(--p3);font-size:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;margin:10px 12px;padding:12px}
+.ct{font-weight:700;color:var(--p1);font-size:15px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.ct span{font-size:11px;background:#fff4dc;color:#8a5a00;border-radius:10px;padding:2px 8px;font-weight:600}
+.date{font-size:20px;font-weight:800;color:var(--p1)}.edit{font-size:12px;color:var(--p3);text-decoration:underline}
+.t{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:14px;padding:9px 10px;margin-top:8px}
+.t.on{border-color:var(--p3);background:#f3ecff}
+.ck{width:26px;height:26px;border-radius:50%;border:2px solid #c9bde0;display:grid;place-items:center;font-weight:800;color:#fff;font-size:14px;flex:none}
+.on .ck{background:var(--p2);border-color:var(--p2)}
+.t b{display:block;font-size:15px}.t small{color:#6b5d86}
+.chip{display:inline-block;margin-top:8px;background:#fff8e6;border:1px solid var(--gold);color:#7a5400;border-radius:14px;padding:3px 10px;font-size:12px}
+.g1{height:96px;border-radius:12px;overflow:hidden;position:relative}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.g3 div{height:62px;border-radius:10px;overflow:hidden;position:relative}
+.g1 img,.g3 img{width:100%;height:100%;object-fit:cover}
+.lbl{position:absolute;left:5px;bottom:5px;background:#3b1470d9;color:#fff;font-size:10px;border-radius:8px;padding:1px 7px}
+.x{position:absolute;right:5px;top:5px;background:#fffd;border-radius:10px;font-size:10px;padding:1px 6px;color:var(--p1)}
+.pv{display:flex;gap:10px;align-items:flex-start}
+.pv img{width:104px;border-radius:8px;border:1px solid var(--line)}
+.pv p{font-size:12px;color:#5b4a7a;line-height:1.5}
+.bgs{display:flex;gap:7px;overflow:hidden;margin-top:8px}
+.bgs div{flex:none;width:52px;text-align:center;font-size:10px;color:#5b4a7a}
+.bgs img{width:52px;height:78px;object-fit:cover;border-radius:8px;border:3px solid transparent}
+.bgs .sel img{border-color:var(--gold)}
+.cta{position:absolute;left:12px;right:12px;bottom:14px;height:54px;border-radius:16px;background:linear-gradient(90deg,var(--p2),var(--p1));color:#fff;font-weight:800;font-size:18px;display:grid;place-items:center;box-shadow:0 8px 18px #3b147055;border:2px solid var(--gold)}
+.dim{position:absolute;inset:0;background:#1a0b36}
+.conf{position:absolute;inset:0;padding:30px 14px 14px;display:flex;flex-direction:column;gap:9px;align-items:center}
+.conf img{height:390px;border-radius:10px;box-shadow:0 8px 20px #0008}
+.sum{background:#ffffff14;border-radius:12px;color:#fff;width:100%;padding:8px 12px;font-size:13px;line-height:1.55}
+.sum b{color:var(--gold2)}
+.b1{width:100%;height:50px;border-radius:14px;background:#06c755;color:#fff;font-weight:800;font-size:17px;display:grid;place-items:center}
+.b2{width:100%;height:42px;border-radius:14px;border:1.5px solid #ffffff55;color:#fff;font-size:14px;display:grid;place-items:center}
+.edit2{color:#d9c8ff;font-size:13px;text-decoration:underline}
+.share{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:14px 16px 22px;box-shadow:0 -10px 30px #0006}
+.share h4{font-size:14px;margin-bottom:10px;color:#333}
+.sh{display:flex;gap:14px}.sh div{text-align:center;font-size:11px;color:#333;width:56px}
+.sh i{display:block;width:52px;height:52px;border-radius:14px;margin-bottom:4px;font-style:normal;display:grid;place-items:center;color:#fff;font-weight:800;font-size:20px}
+.done{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center}
+.ok{width:96px;height:96px;border-radius:50%;background:linear-gradient(180deg,var(--gold2),var(--gold));display:grid;place-items:center;font-size:54px;color:#fff;box-shadow:0 10px 24px #d9a93a66}
+.done h2{color:var(--p1);font-size:21px}.done p{color:#5b4a7a;font-size:14px;line-height:1.5}
+.drv{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13px;color:#3b1470}
+.b3{width:100%;height:48px;border-radius:14px;background:var(--p2);color:#fff;font-weight:700;display:grid;place-items:center}
+</style></head><body>
+<h1>วันเพจครูเวร — หน้าตาบนมือถือ</h1>
+<div class="sub">หน้าเดียวเลื่อนลง · ครูเวรใช้ประมาณ 1 นาทีครึ่ง · ภาพตัวอย่างใช้ข้อมูลจริงของวันนี้</div>
+<div class="row">
+
+<div class="col"><div class="step">① เปิดลิงก์ · เลือกครูเวร</div>
+<div class="phone"><div class="scr">
+ <div class="bar"><span>07:30</span><span>4G ▮▮▮</span></div>
+ <div class="head"><img src="logo.png"><div><b>ช่างกลปทุมวันอนุสรณ์ 8</b><small>ไม่ใช่โรงเรียนนี้? เปลี่ยน</small></div></div>
+ <div class="card"><div class="ct">① ครูเวรประจำวันที่</div>
+  <div class="date">พฤหัสบดี 23 ตุลาคม พ.ศ. 2569</div><div class="edit">แก้วันที่</div>
+  <div class="chip">↺ ใช้ชุดเดิม: รัชเดช</div>
+  <div class="t on"><div class="ck">1</div><div><b>ส.ต.ท.รัชเดช ศรีแก้ว</b><small>081-234-5678</small></div></div>
+  <div class="t"><div class="ck"></div><div><b>นางสาวสุทัตตา เกษี</b><small>08x-xxx-xxxx</small></div></div>
+  <div class="t"><div class="ck"></div><div><b>นายปริญญา นวลสี</b><small>08x-xxx-xxxx</small></div></div>
+  <div class="t"><div class="ck"></div><div><b>นางกัณหา อันทะปัญญา</b><small>08x-xxx-xxxx</small></div></div>
+ </div>
+ <div class="cta" style="background:#bdb3cf;border-color:#bdb3cf">สร้างภาพรายงาน</div>
+</div></div>
+<div class="cap">แตะลิงก์โรงเรียนตัวเองที่ปักหมุดในกลุ่ม LINE → โรงเรียน + วันที่ขึ้นเอง → ติ๊กครูเวร 1–3 คน (เลขบนวงกลม = ลำดับบนภาพ)</div></div>
+
+<div class="col"><div class="step">② ใส่รูป 4 ภาพ · เลือกพื้นหลัง</div>
+<div class="phone"><div class="scr">
+ <div class="bar"><span>07:31</span><span>4G ▮▮▮</span></div>
+ <div class="card" style="margin-top:6px"><div class="ct">② รูปถ่ายวันนี้ 4 ภาพ <span>ถ่ายใหม่วันนี้</span></div>
+  <div class="g1"><img src="p1.jpg"><div class="lbl">อาคารเรียน</div><div class="x">✕ เปลี่ยน</div></div>
+  <div class="g3"><div><img src="p2.jpg"><div class="lbl">สนามกีฬา</div></div><div><img src="p3.jpg"><div class="lbl">แปลงเกษตร</div></div><div><img src="p4.jpg"><div class="lbl">ลานหน้าอาคาร</div></div></div>
+ </div>
+ <div class="card"><div class="ct">③ พื้นหลัง (นครพนม 10 แบบ)</div>
+  <div class="pv"><img src="preview.jpg"><p><b style="color:#3b1470">ตัวอย่างสด</b><br>เปลี่ยนพื้นหลัง รูป หรือครูเวร ภาพนี้เปลี่ยนตามทันที<br><span style="color:#7d4bc4;text-decoration:underline">ดูภาพใหญ่</span></p></div>
+  <div class="bgs"><div class="sel"><img src="t-np-01.jpg">1</div><div><img src="t-np-02.jpg">2</div><div><img src="t-np-04.jpg">3</div><div><img src="t-np-05.jpg">4</div><div><img src="t-np-06.jpg">5</div></div>
+ </div>
+ <div class="cta">สร้างภาพรายงาน</div>
+</div></div>
+<div class="cap">แตะช่องรูป → ถ่ายหรือเลือกจากคลัง (ย่อทันที) · ใส่ป้ายชื่อรูปได้ · เลือกพื้นหลังของจังหวัดตัวเอง เห็นผลสดก่อนกด</div></div>
+
+<div class="col"><div class="step">③ ดูภาพ · ส่งเข้า LINE</div>
+<div class="phone"><div class="scr">
+ <div class="dim"></div>
+ <div class="conf">
+  <img src="result.jpg">
+  <div class="sum">โรงเรียน <b>ช่างกลปทุมวันอนุสรณ์ 8</b><br>ครูเวร <b>ส.ต.ท.รัชเดช ศรีแก้ว</b><br>วันที่ <b>23 ตุลาคม 2569</b></div>
+  <div class="b1">ส่งเข้า LINE</div><div class="b2">บันทึกรูปลงเครื่อง</div><div class="edit2">แก้ไข</div>
+ </div>
+ <div class="share"><h4>แชร์ไปที่…</h4><div class="sh">
+  <div><i style="background:#06c755">L</i>กลุ่มครู ตชด. 11 รร.</div><div><i style="background:#06c755">L</i>LINE</div><div><i style="background:#1877f2">f</i>Messenger</div><div><i style="background:#888">⋯</i>อื่น ๆ</div></div></div>
+</div></div>
+<div class="cap">กดรายงาน → เห็นภาพวันเพจเต็ม + สรุป 3 บรรทัดให้ตรวจ → กด "ส่งเข้า LINE" → แตะกลุ่ม → ส่ง</div></div>
+
+<div class="col"><div class="step">④ ส่งแล้ว · เก็บเข้า Drive เอง</div>
+<div class="phone"><div class="scr">
+ <div class="bar"><span>07:32</span><span>4G ▮▮▮</span></div>
+ <div class="done">
+  <div class="ok">✓</div>
+  <h2>ส่งวันเพจวันที่ 23 ตุลาคม 2569 แล้ว</h2>
+  <p>ขอบคุณครับ</p>
+  <div class="drv">☁ เก็บเข้า Google Drive แล้ว<br><small style="color:#6b5d86">โฟลเดอร์ ช่างกลปทุมวันอนุสรณ์ 8</small></div>
+  <div class="b3" style="margin-top:14px">ทำอีกครั้ง</div>
+  <p style="font-size:12px">ถ้าเน็ตหลุด ระบบจะเก็บเข้า Drive ให้เองรอบหน้า</p>
+ </div>
+</div></div>
+<div class="cap">ภาพเข้ากลุ่ม LINE ในนามครูเวร · สำเนาเข้า Drive ของครูแจ็กเบื้องหลัง แยกโฟลเดอร์ตามโรงเรียน</div></div>
+
+</div></body></html>

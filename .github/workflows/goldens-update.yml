@@ -1,0 +1,24 @@
+name: goldens-update
+# สร้างภาพ golden บน ubuntu (ระบบเดียวกับ CI ที่ตัดสิน) แล้วแนบเป็น artifact ให้ดาวน์โหลดไป commit
+on:
+  workflow_dispatch:
+jobs:
+  goldens:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run goldens:update
+      - name: แนบ golden ของ linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: goldens-linux
+          path: |
+            tests/golden/expected/
+            docs/goldens/index.html
+          if-no-files-found: error

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<title>render check np-01</title>
+<!-- เฉพาะหน้าทดสอบ: ฟอนต์ Kanit จาก Google Fonts (ของจริงจะ self-host ใน site/assets/fonts ตาม Task 6) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;700&display=block">
+<style>html,body{margin:0;background:#fff}canvas{display:block;width:1536px;height:2304px}</style>
+</head><body>
+<canvas id="c" width="1536" height="2304"></canvas>
+<script type="module">
+  // เปิดผ่าน http server ที่รากรีโป: python3 -m http.server 8765 แล้วไป /tests/golden/render-np01.html
+  import { mergeTemplate } from '../../site/js/layout.js';
+  import { renderOnePage } from '../../site/js/render.js';
+
+  const loadImg = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error(src)); i.src = src; });
+  const all = await (await fetch('../../site/templates.json')).json();
+  const resolved = mergeTemplate(all.common, all.templates.find(t => t.id === 'np-01'));
+  await Promise.all([document.fonts.load('500 24px Kanit', 'ก่ปุ 0123 Aa./-'), document.fonts.load('700 24px Kanit', 'ก่ปุ 0123 Aa./-')]);
+  const [bg, logo, ...photos] = await Promise.all([
+    loadImg('../../assets/reference/bg-01-phrathat-naga.png'),
+    loadImg('../../assets/reference/logo-changkon8.png'),
+    ...[1, 2, 3, 4].map(n => loadImg(`../../docs/mockup/p${n}.jpg`)),
+  ]);
+  const model = {
+    school: { name_full: 'โรงเรียนตำรวจตระเวนชายแดนช่างกลปทุมวันอนุสรณ์ 8', address: 'บ้านโนนอุดมดี ต.ดอนเตย อ.นาทม จ.นครพนม 48140' },
+    title: 'รายงานภาพบรรยากาศและบริบทโรงเรียน',
+    dateISO: '2026-10-23',
+    teachers: [{ display_name: 'ส.ต.ท.รัชเดช ศรีแก้ว', phone: '081-234-5678' }],
+    photos: [
+      { label: 'อาคารเรียน', icon: 'building' },
+      { label: 'สนามกีฬา / พื้นที่กิจกรรม', icon: 'field' },
+      { label: 'แปลงเกษตรโรงเรียน', icon: 'farm' },
+      { label: 'ทางเดินอาคารเรียน', icon: 'walkway' },
+    ],
+  };
+  const ctx = document.getElementById('c').getContext('2d');
+  renderOnePage(ctx, model, resolved, 1.5, { bg, logo, photos });
+  document.body.dataset.done = '1';
+</script>
+</body></html>

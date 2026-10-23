@@ -1,0 +1,10 @@
+key,value
+#แถวนี้ถูกข้าม: ควบคุมเว็บโดยไม่ต้อง deploy,
+notice_text,
+notice_level,info
+upload_enabled,TRUE
+min_app_version,1
+title_text,รายงานภาพบรรยากาศและบริบทโรงเรียน
+share_title,วันเพจครูเวร
+share_text_template,วันเพจ {short_name} {date_th}
+data_version,20261023

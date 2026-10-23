@@ -1,0 +1,155 @@
+/* วันเพจครูเวร — ธีมสว่างเท่านั้น ห้ามแถบสีขอบซ้าย ห้ามสีเขียว (ยกเว้นปุ่มส่งเข้า LINE) */
+:root {
+  --p1: #3b1470; --p2: #5b2a9e; --p3: #7d4bc4; --gold: #d9a93a; --gold2: #f6d983;
+  --paper: #f7f3fc; --line: #e4dbf3; --ink: #2a1650; --muted: #5b4a7a; --soft: #f3ecff;
+  --orange-bg: #fff1e0; --orange: #a14a00; --line-green: #06c755;
+  color-scheme: light;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: 'Kanit', system-ui, sans-serif; font-weight: 500; font-size: 18px; line-height: 1.45;
+  background: var(--paper); color: var(--ink); min-height: 100vh;
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.view { max-width: 480px; margin: 0 auto; }
+
+/* ---------- หัวโรงเรียน ---------- */
+.linebar { display: flex; align-items: center; gap: 10px; background: var(--p1); color: #fff; padding: 10px 16px; font-size: 15px; }
+.linebar span { flex: 1; }
+.linebar-btn { background: var(--gold2); color: var(--p1); border-radius: 12px; padding: 8px 16px; font-weight: 700; text-decoration: none; min-height: 52px; min-width: 64px; display: grid; place-items: center; }
+.head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #fff; border-bottom: 1px solid var(--line); }
+.head-logo { height: 48px; width: auto; flex: none; }
+.head-text { min-width: 0; }
+.head-text b { display: block; font-size: 19px; font-weight: 700; color: var(--p1); line-height: 1.3; }
+/* ลิงก์ตัวเล็ก: พื้นที่แตะสูง 52 แต่ใช้ margin ติดลบให้หน้าตา/ระยะเท่าเดิม */
+.linkbtn { display: inline-flex; align-items: center; color: var(--p3); text-decoration: underline; font-size: 15px; padding: 0 4px; min-height: 52px; min-width: 52px; margin: -8px -4px; text-align: left; }
+.linkbtn.small { font-size: 14px; margin: -11px -4px; }
+
+/* ---------- การ์ด ---------- */
+.card { background: #fff; border: 1px solid var(--line); border-radius: 16px; margin: 12px 16px; padding: 14px; }
+.card.center { text-align: center; }
+.ct { font-weight: 700; color: var(--p1); font-size: 18px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tag { font-size: 13px; background: #fff4dc; color: #7a4f00; border-radius: 10px; padding: 2px 10px; font-weight: 500; white-space: nowrap; }
+.select { width: 100%; height: 56px; border: 1.5px solid var(--line); border-radius: 14px; padding: 0 12px; background: #fff; font-size: 18px; }
+.notice { margin: 12px 16px 0; padding: 10px 14px; border-radius: 14px; background: var(--soft); border: 1px solid var(--line); font-size: 16px; color: var(--p1); }
+.notice.warn { background: var(--orange-bg); border-color: #f3cf9e; color: var(--orange); }
+.sent { margin: 12px 16px 0; padding: 10px 14px; border-radius: 14px; background: #fff8e6; border: 1px solid var(--gold); color: #6b4a00; font-size: 16px; }
+.drivebar { display: block; width: calc(100% - 32px); margin: 10px 16px 0; padding: 10px 14px; min-height: 52px; border-radius: 14px; background: #fff; border: 1px solid var(--line); color: var(--p1); font-size: 15px; text-align: left; }
+.btn-soft { margin-top: 10px; min-height: 52px; padding: 0 22px; border-radius: 14px; background: var(--soft); border: 1.5px solid var(--p3); color: var(--p1); font-weight: 700; }
+.msg { margin-top: 8px; font-size: 15px; color: var(--orange); }
+
+/* ---------- ① วันที่ + ครู ---------- */
+.date-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.date { font-size: 22px; font-weight: 700; color: var(--p1); line-height: 1.35; }
+.badge-orange { display: inline-block; background: var(--orange-bg); color: var(--orange); border: 1px solid #f3cf9e; border-radius: 10px; padding: 1px 10px; font-size: 14px; font-weight: 700; }
+.dateinput { display: block; margin-top: 6px; height: 52px; border: 1.5px solid var(--line); border-radius: 14px; padding: 0 12px; width: 100%; background: #fff; }
+.chip { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; min-height: 52px; background: #fff8e6; border: 1px solid var(--gold); color: #6b4a00; border-radius: 20px; padding: 4px 14px; font-size: 15px; }
+.tlist { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.t { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; border: 1.5px solid var(--line); border-radius: 14px; padding: 8px 12px; text-align: left; background: #fff; transition: background .15s, border-color .15s; }
+.t[aria-checked="true"] { border-color: var(--p3); background: var(--soft); }
+.t[aria-disabled="true"] { opacity: .5; }
+.ck { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #c9bde0; display: grid; place-items: center; font-weight: 700; color: #fff; font-size: 16px; flex: none; }
+.t[aria-checked="true"] .ck { background: var(--p2); border-color: var(--p2); }
+.t-name { display: block; font-size: 18px; font-weight: 700; line-height: 1.3; }
+.t-phone { display: block; font-size: 15px; color: #5a4c74; }
+
+/* ---------- ② ช่องรูป (ตำแหน่งตาม photo_layout ของแม่แบบ) ---------- */
+.pgrid { position: relative; width: 100%; }
+.slot { position: absolute; border-radius: 12px; overflow: hidden; background: var(--soft); border: 1.5px dashed #b9a6dc; display: grid; place-items: center; text-align: center; color: var(--p2); font-size: 14px; line-height: 1.25; padding: 4px; }
+.slot.filled { border: 0; padding: 0; }
+.slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.slot input[type=file] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 0; }
+.slot.filled input[type=file] { display: none; }
+.slot-plus { display: block; font-size: 24px; font-weight: 700; line-height: 1; }
+.slot-tap { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lbl { position: absolute; left: 5px; bottom: 5px; max-width: calc(100% - 10px); background: #3b1470d9; color: #fff; font-size: 12px; border-radius: 9px; padding: 2px 8px; min-height: 26px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; z-index: 2; }
+/* พื้นที่แตะของป้าย: ขยายออกข้าง/ขึ้นบนเล็กน้อย สูงรวม 48px จากขอบล่างช่อง — ส่วนบนของช่องยังแตะเปิดเมนูรูปได้ */
+.lbl::before { content: ''; position: absolute; left: -5px; bottom: -5px; width: max(calc(100% + 10px), 48px); height: 48px; }
+.lbl { overflow: visible; }
+.lbl-text { display: block; overflow: hidden; text-overflow: ellipsis; }
+.lbl.add { background: #ffffffe6; color: var(--p1); border: 1px solid var(--line); }
+.slot:not([data-index="0"]) .lbl { font-size: 11px; min-height: 24px; padding: 1px 6px; left: 4px; bottom: 4px; }
+.slot:not([data-index="0"]) .lbl::before { left: -4px; bottom: -4px; width: max(calc(100% + 8px), 48px); height: 48px; }
+.x { position: absolute; right: 5px; top: 5px; background: #fffd; border-radius: 10px; font-size: 12px; padding: 1px 7px; color: var(--p1); z-index: 2; pointer-events: none; }
+.slot.busy::after { content: ''; position: absolute; inset: 0; background: #ffffffb3 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="11" fill="none" stroke="%237d4bc4" stroke-width="3" stroke-dasharray="50 20"/></svg>') center no-repeat; }
+
+/* ---------- ③ พรีวิว + พื้นหลัง ---------- */
+.pv { display: flex; gap: 12px; align-items: flex-start; }
+.pv-frame { position: relative; flex: none; width: 128px; }
+#preview { display: block; width: 128px; height: 192px; border-radius: 8px; border: 1px solid var(--line); background: #ece6f6; }
+.pv-tap { position: absolute; inset: 0; border-radius: 8px; background: #ffffffcc; color: var(--p1); font-weight: 700; font-size: 15px; }
+.pv-text { font-size: 15px; color: var(--muted); line-height: 1.5; }
+.pv-text b { color: var(--p1); }
+.bgs { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; margin-top: 12px; padding-bottom: 6px; }
+.bg { flex: none; width: 80px; scroll-snap-align: start; text-align: center; font-size: 13px; color: var(--muted); line-height: 1.25; }
+.bg img { display: block; width: 80px; height: 120px; object-fit: cover; border-radius: 10px; border: 3px solid transparent; background: #ece6f6; }
+.bg[aria-checked="true"] img { border-color: var(--gold); }
+.bg[aria-checked="true"] { color: var(--p1); font-weight: 700; }
+
+/* ---------- ปุ่มรายงาน sticky ---------- */
+.cta-space { height: 120px; }
+.cta-wrap { position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; padding: 8px 16px calc(14px + env(safe-area-inset-bottom)); background: linear-gradient(#f7f3fc00, var(--paper) 30%); }
+.cta-wrap > * { max-width: 448px; margin-left: auto; margin-right: auto; }
+.cta-msg { width: fit-content; max-width: 100%; text-align: center; font-size: 15px; color: var(--orange); margin-bottom: 6px; background: #fff; border: 1px solid #f3cf9e; border-radius: 12px; padding: 2px 12px; }
+.cta-msg:empty { visibility: hidden; }
+.cta { display: block; width: 100%; height: 60px; border-radius: 16px; background: linear-gradient(90deg, var(--p2), var(--p1)); color: #fff; font-weight: 700; font-size: 20px; box-shadow: 0 8px 18px #3b147055; border: 2px solid var(--gold); }
+.cta.off { background: #e4dbf3; border-color: #cbbde3; box-shadow: none; color: #4a3a6a; } /* ตัวอักษร/พื้น 7.5:1 */
+
+/* ---------- กำลังสร้างภาพ ---------- */
+.busy { position: fixed; inset: 0; background: #1a0b36cc; display: grid; place-items: center; z-index: 50; }
+.busy-box { background: #fff; border-radius: 16px; padding: 22px 26px; text-align: center; color: var(--p1); max-width: 300px; }
+.spin { width: 44px; height: 44px; margin: 0 auto 10px; border-radius: 50%; border: 4px solid var(--line); border-top-color: var(--p2); animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- หน้ายืนยัน (มืด) ---------- */
+dialog { border: 0; padding: 0; }
+.confirm { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; background: #1a0b36; color: #fff; }
+.confirm::backdrop { background: #1a0b36; }
+.conf { min-height: 100%; max-width: 480px; margin: 0 auto; padding: 22px 16px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.conf img { display: block; width: auto; max-width: 100%; height: auto; max-height: 52vh; border-radius: 10px; box-shadow: 0 8px 20px #0008; background: #2a1650; }
+.sum { background: #ffffff14; border-radius: 12px; width: 100%; padding: 10px 14px; font-size: 17px; line-height: 1.6; }
+.sum b { color: var(--gold2); font-weight: 700; }
+.sum-size { font-size: 14px; color: #cbbfe6; }
+.b1 { width: 100%; min-height: 60px; border-radius: 14px; background: var(--line-green); color: #fff; font-weight: 700; font-size: 20px; display: grid; place-items: center; }
+.b1p { width: 100%; min-height: 60px; border-radius: 14px; background: linear-gradient(90deg, var(--p2), var(--p1)); border: 2px solid var(--gold); color: #fff; font-weight: 700; font-size: 20px; display: grid; place-items: center; }
+.b2 { width: 100%; min-height: 52px; border-radius: 14px; border: 1.5px solid #ffffff66; color: #fff; font-size: 17px; display: grid; place-items: center; text-decoration: none; }
+.edit2 { color: #d9c8ff; font-size: 16px; text-decoration: underline; min-height: 52px; min-width: 96px; padding: 0 16px; }
+.conf-msg { font-size: 15px; color: var(--gold2); text-align: center; }
+.chromebox { width: 100%; background: #ffffff14; border-radius: 12px; padding: 10px 14px; font-size: 15px; display: flex; flex-direction: column; gap: 8px; }
+.ios-steps { width: 100%; background: #ffffff14; border-radius: 12px; padding: 10px 14px 10px 36px; font-size: 16px; line-height: 1.7; }
+.big-wrap { height: calc(100% - 90px); overflow: auto; touch-action: pinch-zoom pan-x pan-y; display: grid; place-items: start center; padding: 16px; }
+#bigCanvas { width: 100%; max-width: 512px; height: auto; border-radius: 10px; }
+.big-close { width: calc(100% - 32px); max-width: 448px; margin: 8px auto 0; }
+
+/* ---------- bottom sheet ---------- */
+.sheet { margin: auto auto 0; width: 100%; max-width: 480px; max-height: 85vh; border-radius: 22px 22px 0 0; background: #fff; color: var(--ink); padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
+.sheet::backdrop { background: #1a0b3699; }
+.sheet h3 { font-size: 18px; color: var(--p1); margin-bottom: 8px; }
+.sheet button { display: block; width: 100%; min-height: 52px; text-align: left; padding: 0 12px; border-radius: 12px; font-size: 18px; color: var(--p1); }
+.sheet button:hover { background: var(--soft); }
+.sheet .sheet-cancel { text-align: center; color: var(--muted); margin-top: 4px; }
+.label-list { max-height: 45vh; overflow-y: auto; }
+.label-own { display: flex; gap: 8px; margin: 8px 0; }
+.label-own input { flex: 1; min-width: 0; height: 52px; border: 1.5px solid var(--line); border-radius: 12px; padding: 0 12px; }
+.label-own button { width: auto; flex: none; background: var(--p2); color: #fff; text-align: center; padding: 0 20px; }
+
+/* ---------- หน้า "ส่งแล้ว" ---------- */
+.done { position: relative; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px 20px; text-align: center; }
+.ok { width: 96px; height: 96px; border-radius: 50%; background: linear-gradient(180deg, var(--gold2), var(--gold)); display: grid; place-items: center; font-size: 54px; color: #fff; box-shadow: 0 10px 24px #d9a93a66; font-weight: 700; }
+.done h2 { color: var(--p1); font-size: 23px; line-height: 1.4; }
+.done p { color: var(--muted); font-size: 16px; }
+.drv { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 15px; color: var(--p1); max-width: 340px; }
+.drv small { display: block; color: #6b5d86; font-size: 13px; }
+.btn-main { width: 100%; max-width: 340px; min-height: 56px; border-radius: 14px; background: var(--p2); color: #fff; font-weight: 700; font-size: 19px; margin-top: 12px; }
+.small-note { font-size: 13px !important; }
+.menu-btn { position: absolute; top: 12px; right: 12px; width: 52px; height: 52px; border-radius: 50%; font-size: 26px; color: var(--p1); }
+.menu { position: absolute; top: 64px; right: 12px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 8px 22px #3b147033; overflow: hidden; z-index: 5; }
+.menu button { display: block; width: 100%; min-height: 52px; padding: 0 20px; text-align: left; color: var(--p1); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

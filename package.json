@@ -1,0 +1,23 @@
+{
+  "name": "wanpage-kruwen",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "serve": "node tools/static-server.mjs site 8080",
+    "goldens": "node tools/goldens.mjs",
+    "goldens:update": "node tools/goldens.mjs --update",
+    "validate": "node tools/validate-templates.mjs",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "fake-indexeddb": "^6.2.6",
+    "pixelmatch": "^8.0.0",
+    "playwright": "^1.64.1",
+    "pngjs": "^7.0.0",
+    "sharp": "^0.35.5",
+    "vitest": "^5.0.5"
+  }
+}
