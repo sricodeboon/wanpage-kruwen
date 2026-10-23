@@ -18,12 +18,40 @@ function defaultLoadImage(file) {
   });
 }
 
+// รูป HEIC/HEIF จาก iPhone: Safari ถอดรหัสเองได้ แต่ Chrome/Android ไม่ได้ → แปลงเป็น JPEG ด้วย heic2any
+// (ไฟล์ใหญ่ ~1.3 MB จึงโหลดเฉพาะตอนเจอไฟล์ HEIC จริง)
+export function isHeic(file) {
+  return /hei[cf]/i.test(file?.type || '') || /\.hei[cf]$/i.test(file?.name || '');
+}
+
+let heicLib = null;
+function loadHeic2any() {
+  if (!heicLib) {
+    heicLib = new Promise((resolve, reject) => {
+      if (globalThis.heic2any) { resolve(globalThis.heic2any); return; }
+      const s = document.createElement('script');
+      s.src = new URL('../vendor/heic2any.min.js', import.meta.url).href;
+      s.onload = () => (globalThis.heic2any ? resolve(globalThis.heic2any) : reject(new Error('heic2any ไม่พร้อม')));
+      s.onerror = () => reject(new Error('โหลดตัวแปลง HEIC ไม่ได้'));
+      document.head.appendChild(s);
+    }).catch((e) => { heicLib = null; throw e; });
+  }
+  return heicLib;
+}
+
+async function defaultHeicToJpeg(file) {
+  const heic2any = await loadHeic2any();
+  const out = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
+  return Array.isArray(out) ? out[0] : out;
+}
+
 function defaultDeps() {
   return {
     createImageBitmap: typeof createImageBitmap === 'function' ? (f, o) => createImageBitmap(f, o) : undefined,
     createCanvas,
     canvasToBlob,
     loadImage: defaultLoadImage,
+    heicToJpeg: defaultHeicToJpeg,
   };
 }
 
@@ -64,8 +92,22 @@ async function encode(source, w, h, deps, quality) {
   return { blob, w, h };
 }
 
-export async function processPhoto(file, { maxSide = 1600, quality = 0.85, deps = {} } = {}) {
-  if (!file || typeof file.type !== 'string' || !file.type.startsWith('image/')) {
+export async function processPhoto(file, opts = {}) {
+  const heic = isHeic(file);
+  try {
+    return await decodeAndEncode(file, opts, heic);
+  } catch (e) {
+    if (!heic) throw e;
+    // เบราว์เซอร์นี้ถอด HEIC เองไม่ได้ → แปลงเป็น JPEG แล้วทำซ้ำ
+    const d = { ...defaultDeps(), ...(opts.deps || {}) };
+    let jpeg;
+    try { jpeg = await d.heicToJpeg(file); } catch (err) { throw decodeError('แปลงรูป HEIC ไม่ได้', err); }
+    return decodeAndEncode(jpeg, opts, false);
+  }
+}
+
+async function decodeAndEncode(file, { maxSide = 1600, quality = 0.85, deps = {} } = {}, allowNonImageType = false) {
+  if (!file || typeof file.type !== 'string' || (!file.type.startsWith('image/') && !allowNonImageType)) {
     throw decodeError('ไฟล์นี้ไม่ใช่รูปภาพ');
   }
   const d = { ...defaultDeps(), ...deps };

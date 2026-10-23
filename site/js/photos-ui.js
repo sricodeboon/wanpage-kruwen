@@ -43,7 +43,7 @@ export function createPhotos(ctx) {
       width: `${(r.w / box.W) * 100}%`, height: `${(r.h / box.H) * 100}%`,
     });
     const hint = hintFor(lay, i);
-    const input = `<input type="file" accept="image/*" ${i === 0 ? 'multiple' : ''} aria-label="เลือกรูป ${hint}" data-index="${i}">`;
+    const input = `<input type="file" accept="image/*,.heic,.heif" ${i === 0 ? 'multiple' : ''} aria-label="เลือกรูป ${hint}" data-index="${i}">`;
     if (p) {
       slot.innerHTML = `<img src="${thumbUrls[i]}" alt="">`
         + `<button type="button" class="slot-tap" data-slot="${i}" aria-label="${hint}: เปลี่ยนหรือจัดการรูป"></button>`

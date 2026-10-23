@@ -80,3 +80,46 @@ describe('processPhotosSequential', () => {
     expect(out).toEqual([[0, true], [1, true]]);
   });
 });
+
+describe('HEIC (Chrome/Android ถอดเองไม่ได้)', () => {
+  // ถอดรหัสไฟล์ HEIC ล้มทุกเส้นทาง แต่ JPEG ที่แปลงแล้วถอดได้
+  function heicDeps() {
+    const base = mkDeps({ w: 4032, h: 3024 });
+    const jpeg = new Blob(['j'], { type: 'image/jpeg' });
+    base.deps.createImageBitmap = vi.fn(async (f, o) => {
+      if (f !== jpeg) throw new DOMException('bad', 'InvalidStateError');
+      return o && o.resizeWidth ? { width: o.resizeWidth, height: o.resizeHeight, close() {} } : { width: 4032, height: 3024, close() {} };
+    });
+    base.deps.loadImage = vi.fn(async () => { throw new Error('no heic'); });
+    base.deps.heicToJpeg = vi.fn(async () => jpeg);
+    return { ...base, jpeg };
+  }
+  it('isHeic รู้จักจาก type หรือนามสกุล', async () => {
+    const { isHeic } = await import('../../site/js/photos.js');
+    expect(isHeic({ type: 'image/heic', name: 'x' })).toBe(true);
+    expect(isHeic({ type: '', name: 'IMG_9113.HEIC' })).toBe(true);
+    expect(isHeic({ type: 'image/jpeg', name: 'a.jpg' })).toBe(false);
+  });
+  it('ถอดเองไม่ได้ → แปลงเป็น JPEG แล้วย่อเป็น 1600x1200', async () => {
+    const { deps } = heicDeps();
+    const r = await processPhoto({ type: 'image/heic', name: 'IMG_9113.HEIC' }, { deps });
+    expect(deps.heicToJpeg).toHaveBeenCalledTimes(1);
+    expect([r.w, r.h]).toEqual([1600, 1200]);
+  });
+  it('ไฟล์ .HEIC ที่ type ว่าง (บาง OS) ไม่ถูกปัดว่า "ไม่ใช่รูปภาพ"', async () => {
+    const { deps } = heicDeps();
+    const r = await processPhoto({ type: '', name: 'IMG_9114.HEIC' }, { deps });
+    expect(r.w).toBe(1600);
+  });
+  it('แปลงไม่สำเร็จ → DecodeError', async () => {
+    const { deps } = heicDeps();
+    deps.heicToJpeg = vi.fn(async () => { throw new Error('boom'); });
+    await expect(processPhoto({ type: 'image/heic', name: 'a.heic' }, { deps })).rejects.toMatchObject({ name: 'DecodeError' });
+  });
+  it('JPEG ธรรมดาไม่เรียกตัวแปลง HEIC', async () => {
+    const { deps } = mkDeps();
+    deps.heicToJpeg = vi.fn();
+    await processPhoto(img(), { deps });
+    expect(deps.heicToJpeg).not.toHaveBeenCalled();
+  });
+});
