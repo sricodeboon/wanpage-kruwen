@@ -162,6 +162,9 @@ function mergeModel(model) {
   $('dataBadge').hidden = true;
   showNotice(model.settings);
   if (checkAppVersion(model.settings)) return;
+  // ลิงก์ ?s= ของโรงเรียนที่ข้อมูลในเครื่องยังไม่มี → ข้อมูลใหม่มีแล้ว ให้สลับไปโรงเรียนตามลิงก์
+  const pending = app.urlSchoolPending;
+  if (pending && model.schools.some((s) => s.school_id === pending)) { setSchool(pending); return; }
   if (!school()) { chooseSchool(); return; }
   state.selectedTeacherIds = reconcileSelection(state.selectedTeacherIds, teachers());
   renderHeader();
@@ -203,10 +206,12 @@ function chooseSchool() {
     .map((s) => `<option value="${esc(s.school_id)}">${esc(s.name_full || s.short_name)}</option>`).join('');
   const fromUrl = new URLSearchParams(location.search).get('s');
   const pick = [fromUrl, ls.get('wp.school')].find((id) => id && schools.some((s) => s.school_id === id));
+  app.urlSchoolPending = fromUrl && pick !== fromUrl ? fromUrl : null;
   if (pick) setSchool(pick); else { $('schoolPick').hidden = schools.length === 0; renderAllSections(); }
 }
 
 function setSchool(id) {
+  app.urlSchoolPending = null;
   state.schoolId = id;
   ls.set('wp.school', id);
   $('schoolPick').hidden = true;
