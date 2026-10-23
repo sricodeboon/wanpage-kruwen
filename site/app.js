@@ -16,6 +16,7 @@ import { createDrive } from './js/drive-ui.js';
 import { createPhotos } from './js/photos-ui.js';
 import { loadJsonCached, validConfig, validTemplates } from './js/remote-json.js';
 import { createImageLoader, logoSrc, loadFinalAssets, loadPreviewAssets, AssetError } from './js/assets.js';
+import { panel, busyShow, busyHide, toast, info, closeAll } from './js/ui.js';
 
 const $ = (id) => document.getElementById(id);
 const PROVINCE_TH = { np: 'นครพนม', sn: 'สกลนคร', mdh: 'มุกดาหาร' };
@@ -184,7 +185,9 @@ function showNotice(settings) {
   const n = $('notice');
   n.hidden = !settings.notice_text;
   n.textContent = settings.notice_text || '';
-  n.classList.toggle('warn', settings.notice_level === 'warn');
+  const warn = settings.notice_level === 'warn';
+  n.classList.toggle('alert-warning', warn);
+  n.classList.toggle('alert-primary', !warn);
 }
 
 function setupLineBar() {
@@ -291,7 +294,7 @@ function renderTeachers() {
     const order = state.selectedTeacherIds.indexOf(t.teacher_id);
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 't';
+    b.className = 'list-group-item list-group-item-action t';
     b.setAttribute('role', 'checkbox');
     b.setAttribute('aria-checked', String(order >= 0));
     b.setAttribute('aria-disabled', String(full && order < 0)); // แตะได้ เพื่อบอกเหตุผล
@@ -330,7 +333,7 @@ function renderReuseChip() {
 function renderBackgrounds() {
   const s = school();
   const list = app.templates;
-  $('hBg').textContent = s ? `③ พื้นหลัง (${PROVINCE_TH[s.province] || s.province} ${list.length} แบบ)` : '③ พื้นหลัง';
+  $('hBg').textContent = s ? `พื้นหลัง (${PROVINCE_TH[s.province] || s.province} ${list.length} แบบ)` : 'พื้นหลัง';
   $('bgList').innerHTML = list.map((t, k) => `<button type="button" class="bg" role="radio" data-bg="${esc(t.id)}" aria-checked="${t.id === state.bgId}" aria-label="${esc(t.name || t.id)}">`
     + `<img src="${esc(t.thumb)}" alt="" loading="lazy" width="80" height="120">${k + 1}</button>`).join('');
   const failed = Boolean(s) && !app.templatesAll;
@@ -372,24 +375,26 @@ async function onCreate() {
     return;
   }
   setPhase('rendering');
-  $('busyText').textContent = 'กำลังสร้างภาพ… (ฟอนต์… รูป 4/4 ✓)';
-  $('busy').hidden = false;
+  busyShow('ฟอนต์… รูป 4/4 ✓');
   try {
     if (!(await ensureFonts({ timeoutMs: 3000 }))) {
       $('ctaMsg').textContent = MSG_FONTS;
       setPhase('form', 'fonts');
       return;
     }
-    $('busyText').textContent = 'กำลังสร้างภาพ… (ฟอนต์ ✓ รูป 4/4 ✓)';
+    busyShow('ฟอนต์ ✓ รูป 4/4 ✓');
     const file = await renderReport();
     await queueReport(file);
     openConfirm(file);
   } catch (e) {
     log('render error', String(e?.message || e));
-    $('ctaMsg').textContent = e instanceof AssetError ? e.message : 'สร้างภาพไม่สำเร็จ ลองกดอีกครั้ง';
+    const msg = e instanceof AssetError ? e.message : 'สร้างภาพไม่สำเร็จ ลองกดอีกครั้ง';
+    $('ctaMsg').textContent = msg;
     setPhase('form', 'error');
+    busyHide();
+    toast(msg, 'error');
   } finally {
-    $('busy').hidden = true;
+    busyHide(); // ถ้าเปิดหน้ายืนยันแล้ว busyHide ไม่ปิดมัน
   }
 }
 
@@ -438,23 +443,50 @@ async function queueReport(file) {
   }
 }
 
-// ---------- หน้ายืนยัน ----------
+// ---------- หน้ายืนยัน (SweetAlert2) ----------
+// ปุ่มอยู่ใน html ของ Swal และผูก onclick ใน didOpen → navigator.share ถูกเรียกตรงจากการแตะ (user activation)
+function confirmHtml(file, canShare) {
+  return `<div id="confirm" class="conf" aria-labelledby="sumTitle">`
+    + `<img id="confirmImg" class="conf-img" alt="ภาพรายงานที่จะส่ง">`
+    + `<div id="sumTitle" class="sum">`
+    + `<div>โรงเรียน <b id="sumSchool"></b></div>`
+    + `<div>ครูเวร <b id="sumTeachers"></b></div>`
+    + `<div>วันที่ <b id="sumDate"></b> <span id="sumNotToday" class="badge rounded-pill badge-orange" hidden>ไม่ใช่วันนี้</span></div>`
+    + `<div id="sumSize" class="sum-size"></div></div>`
+    + `<div id="chromeBox" class="alert alert-primary chromebox mb-0"${canShare ? ' hidden' : ''}>`
+    + `<p class="mb-2">เปิดลิงก์ใน Chrome จะส่งเข้า LINE ได้ในแตะเดียว</p>`
+    + `<a id="chromeLink" class="btn btn-outline-primary w-100 tap" href="#">เปิดใน Chrome</a></div>`
+    + `<button id="shareBtn" type="button" class="btn btn-line btn-lg w-100 tap-lg"${canShare ? '' : ' hidden'}>ส่งเข้า LINE</button>`
+    + `<button id="saveBtn" type="button" class="btn ${canShare ? 'btn-outline-primary' : 'btn-primary btn-cta'} btn-lg w-100 ${canShare ? 'tap' : 'tap-lg'}">บันทึกรูปลงเครื่อง</button>`
+    + `<p id="confirmMsg" class="alert alert-gold conf-msg mb-0" aria-live="polite" hidden></p>`
+    + `<button id="editBtn" type="button" class="btn btn-link linkbtn edit2">แก้ไข</button></div>`;
+}
+
 function openConfirm(file) {
   if (app.lastFile?.url) URL.revokeObjectURL(app.lastFile.url);
   app.lastFile = { file, url: URL.createObjectURL(file) };
-  $('confirmImg').src = app.lastFile.url;
-  $('sumSchool').textContent = shortSchoolName(school());
-  $('sumTeachers').textContent = app.lastReport.teacher_names.join(', ');
-  $('sumDate').textContent = formatThaiDate(state.dateISO).replace('พ.ศ. ', '');
-  $('sumNotToday').hidden = state.dateISO === app.today;
-  $('sumSize').textContent = `ขนาดไฟล์ ${(file.size / 1048576).toFixed(1)} MB`;
+  showConfirm();
+}
+
+// เปิด/เปิดซ้ำ (หลังปิดหน้าต่างกดค้างบันทึก) โดยไม่สร้างภาพใหม่
+function showConfirm() {
+  const file = app.lastFile.file;
   const canShare = canShareFile(file);
-  $('shareBtn').hidden = !canShare;
-  $('saveBtn').className = canShare ? 'b2' : 'b1p'; // เขียวใช้เฉพาะปุ่มส่งเข้า LINE
-  $('chromeBox').hidden = canShare;
-  $('chromeLink').href = externalBrowserUrl(location.href);
-  $('confirmMsg').hidden = true;
-  $('confirm').showModal();
+  panel({
+    html: confirmHtml(file, canShare), cls: 'wp-confirm', allowOutsideClick: false,
+    onOpen: () => {
+      $('confirmImg').src = app.lastFile.url;
+      $('sumSchool').textContent = shortSchoolName(school());
+      $('sumTeachers').textContent = app.lastReport.teacher_names.join(', ');
+      $('sumDate').textContent = formatThaiDate(state.dateISO).replace('พ.ศ. ', '');
+      $('sumNotToday').hidden = state.dateISO === app.today;
+      $('sumSize').textContent = `ขนาดไฟล์ ${(file.size / 1048576).toFixed(1)} MB`;
+      $('chromeLink').href = externalBrowserUrl(location.href);
+      $('shareBtn').onclick = onShare;
+      $('saveBtn').onclick = onSave;
+      $('editBtn').onclick = () => { closeAll(); setPhase('form', 'edit'); };
+    },
+  }).then((r) => { if (r.dismiss === 'esc' && app.phase === 'confirm') setPhase('form', 'edit'); });
   setPhase('confirm');
 }
 
@@ -476,13 +508,27 @@ function onSave() {
   markSent();
   // LINE in-app / iOS: ดาวน์โหลด blob ไม่ได้จริง → ให้กดค้างที่รูป (ไม่บอกว่า "บันทึกแล้ว")
   if (saveMode(navigator.userAgent) === 'longpress') {
-    $('iosImg').src = app.lastFile.url;
-    $('iosSave').showModal();
+    showIosSave();
   } else {
     downloadFile(app.lastFile.file);
     showMsg('confirmMsg', 'บันทึกรูปลงเครื่องแล้ว — เปิดกลุ่ม LINE แล้วแนบรูปนี้');
   }
   drive.kick();
+}
+
+// iOS/LINE: กดค้างที่รูปเพื่อบันทึก — ปิดแล้วกลับหน้ายืนยัน
+function showIosSave() {
+  panel({
+    cls: 'wp-confirm', allowOutsideClick: false,
+    html: `<div id="iosSave" class="conf">`
+      + `<img id="iosImg" class="conf-img" alt="ภาพรายงาน กดค้างเพื่อบันทึก">`
+      + `<ol class="ios-steps"><li>กดค้างที่รูป</li><li>บันทึกรูปภาพ</li><li>ไปกลุ่ม LINE → แนบรูป</li></ol>`
+      + `<button id="iosClose" type="button" class="btn btn-primary btn-lg w-100 tap">เสร็จแล้ว</button></div>`,
+    onOpen: () => {
+      $('iosImg').src = app.lastFile.url;
+      $('iosClose').onclick = showConfirm;
+    },
+  }).then((r) => { if (r.dismiss === 'esc') showConfirm(); });
 }
 
 function markSent() {
@@ -493,7 +539,7 @@ function markSent() {
 // ---------- หน้า "ส่งแล้ว" ----------
 function showDone() {
   markSent();
-  $('confirm').close();
+  closeAll();
   $('doneTitle').textContent = `ส่งวันเพจวันที่ ${formatThaiDate(state.dateISO).replace('พ.ศ. ', '')} แล้ว`;
   $('doneDrive').hidden = !drive.on();
   $('doneNote').hidden = !drive.on();
@@ -530,14 +576,8 @@ function bindForm() {
   $('retryTemplates').onclick = retryTemplates;
   $('bgList').onclick = (e) => { const b = e.target.closest('[data-bg]'); if (b) onBgTap(b.dataset.bg); };
   $('tapPreview').onclick = () => preview.draw($('preview'), 0.25, true);
-  $('bigPreviewBtn').onclick = () => { $('bigPreview').showModal(); preview.draw($('bigCanvas'), 0.5, true); };
-  $('bigClose').onclick = () => $('bigPreview').close();
+  $('bigPreviewBtn').onclick = openBigPreview;
   $('cta').onclick = onCreate;
-  $('shareBtn').onclick = onShare;
-  $('saveBtn').onclick = onSave;
-  $('editBtn').onclick = () => { $('confirm').close(); setPhase('form', 'edit'); };
-  $('confirm').addEventListener('cancel', () => setPhase('form', 'edit'));
-  $('iosClose').onclick = () => $('iosSave').close();
   $('again').onclick = again;
   $('closeDone').onclick = () => { window.close(); setTimeout(again, 300); };
   $('doneMenuBtn').onclick = () => { $('doneMenu').hidden = !$('doneMenu').hidden; };
@@ -545,14 +585,32 @@ function bindForm() {
     $('doneMenu').hidden = true;
     const m = await refreshData({ config: app.config, storage, fetchFn: (...a) => fetch(...a) });
     if (m) mergeModel(m);
+    toast(m ? 'โหลดข้อมูลใหม่แล้ว' : 'ยังโหลดไม่ได้ ต่อเน็ตแล้วลองใหม่', m ? 'success' : 'warning');
   };
   $('reportIssue').onclick = async () => {
     $('doneMenu').hidden = true;
-    try { await navigator.clipboard.writeText(debugLog.join('\n')); alert('คัดลอกข้อความแล้ว ส่งให้ครูแจ็กใน LINE ได้เลย'); } catch { alert(debugLog.slice(-10).join('\n')); }
+    try {
+      await navigator.clipboard.writeText(debugLog.join('\n'));
+      info({ icon: 'success', title: 'คัดลอกข้อความแล้ว', text: 'ส่งให้ครูแจ็กใน LINE ได้เลย' });
+    } catch {
+      info({ title: 'แจ้งปัญหา', html: `<p>กดค้างที่ข้อความแล้วเลือกคัดลอก ส่งให้ครูแจ็กใน LINE</p><textarea class="form-control log-box" readonly>${esc(debugLog.slice(-10).join('\n'))}</textarea>` });
+    }
   };
   $('driveBar').onclick = drive.retryTap;
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshToday(); });
   window.addEventListener('pageshow', refreshToday);
+}
+
+function openBigPreview() {
+  panel({
+    cls: 'wp-big',
+    html: `<div id="bigPreview" class="big-wrap"><canvas id="bigCanvas" width="512" height="768" aria-label="ภาพตัวอย่างขนาดใหญ่"></canvas></div>`
+      + `<button id="bigClose" type="button" class="btn btn-primary btn-lg w-100 tap mt-2">ปิด</button>`,
+    onOpen: () => {
+      $('bigClose').onclick = closeAll;
+      preview.draw($('bigCanvas'), 0.5, true);
+    },
+  });
 }
 
 // ---------- ตัวช่วย ----------

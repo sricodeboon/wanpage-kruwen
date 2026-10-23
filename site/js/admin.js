@@ -33,7 +33,11 @@ const linkFor = (id) => `${BASE}?s=${encodeURIComponent(id)}&openExternalBrowser
 
 // ---------- แท็บ ----------
 function showTab(panelId) {
-  document.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.panel === panelId)));
+  document.querySelectorAll('.tab').forEach((t) => {
+    const on = t.dataset.panel === panelId;
+    t.setAttribute('aria-selected', String(on));
+    t.classList.toggle('active', on);
+  });
   document.querySelectorAll('.panel').forEach((p) => { p.hidden = p.id !== panelId; });
   try { store.setItem('wp.admin.tab', panelId); } catch { /* ข้าม */ }
   if (panelId === 'p-health') checkHealth();
@@ -112,14 +116,14 @@ function renderLinks() {
   box.innerHTML = '';
   for (const s of A.model.schools) {
     const card = document.createElement('div');
-    card.className = 'card';
+    card.className = 'card card-body shadow-sm';
     const url = linkFor(s.school_id);
     card.innerHTML = `<b>${esc(s.name_full || s.short_name)}</b><a class="lnk" href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>`;
     const cv = document.createElement('canvas');
     try { drawQR(cv, url); } catch { cv.remove(); }
     card.appendChild(cv);
     const b = document.createElement('button');
-    b.type = 'button'; b.className = 'btn alt'; b.textContent = 'คัดลอกลิงก์';
+    b.type = 'button'; b.className = 'btn btn-outline-primary'; b.textContent = 'คัดลอกลิงก์';
     const st = document.createElement('span'); st.className = 'muted'; st.setAttribute('role', 'status');
     b.onclick = () => copyText(url, st);
     card.append(b, st);

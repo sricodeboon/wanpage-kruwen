@@ -7,35 +7,31 @@
 <meta name="color-scheme" content="light">
 <title>ผู้ดูแล วันเพจครูเวร</title>
 <link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="stylesheet" href="vendor/bootstrap.min.css">
 <link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="styles.css">
 <style>
   body { padding-bottom: 40px; }
-  .adm-head { background: linear-gradient(90deg, var(--p2), var(--p1)); color: #fff; padding: 16px; border-bottom: 3px solid var(--gold); }
+  .adm-head { background: linear-gradient(90deg, var(--p2), var(--p1)); color: #fff; border-bottom: 3px solid var(--gold); }
   .adm-head b { font-size: 22px; display: block; }
   .adm-head small { color: var(--gold2); font-size: 15px; }
-  .tabs { display: flex; gap: 8px; padding: 12px 16px 0; overflow-x: auto; }
-  .tab { min-height: 52px; min-width: 52px; padding: 0 16px; border-radius: 14px; border: 1.5px solid var(--line); background: #fff; font-weight: 700; white-space: nowrap; color: var(--p1); }
-  .tab[aria-selected="true"] { background: var(--p1); color: #fff; border-color: var(--gold); }
-  .panel[hidden] { display: none; }
-  .wrap { max-width: 1100px; margin: 0 auto; }
-  .btn { min-height: 52px; min-width: 52px; padding: 0 18px; border-radius: 14px; background: linear-gradient(90deg, var(--p2), var(--p1)); border: 2px solid var(--gold); color: #fff; font-weight: 700; }
-  .btn.alt { background: #fff; color: var(--p1); border: 1.5px solid var(--p3); }
-  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-  .warns { list-style: none; display: grid; gap: 8px; }
-  .warns li { background: var(--orange-bg); color: var(--orange); border-radius: 12px; padding: 10px 12px; }
-  .ok { background: var(--soft); color: var(--p1); border-radius: 12px; padding: 10px 12px; }
-  .tbl { width: 100%; border-collapse: collapse; font-size: 16px; }
-  .tbl th, .tbl td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .tabs { flex-wrap: nowrap; overflow-x: auto; gap: 8px; }
+  .tab { flex: none; min-height: 52px; min-width: 52px; padding: 0 16px; border: 1.5px solid var(--line) !important; background: #fff; font-weight: 700; white-space: nowrap; }
+  .tab.active { border-color: var(--gold) !important; }
+  .adm .card { margin-bottom: 12px; }
+  .btn { min-height: 52px; min-width: 52px; }
+  .warns { list-style: none; display: grid; gap: 8px; padding: 0; margin: 8px 0 0; }
+  .warns li { background: var(--orange-bg); color: var(--orange); border: 1px solid #f3cf9e; border-radius: 12px; padding: 10px 12px; }
+  .warns li.ok { background: var(--soft); color: var(--p1); border-color: var(--line); }
+  .tbl { font-size: 16px; --bs-table-color: var(--ink); --bs-table-border-color: var(--line); margin: 0; }
   .tbl th { color: var(--muted); }
-  .tbl-scroll { overflow-x: auto; }
-  .linkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin: 12px 16px; }
+  .linkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
   .linkgrid .card { margin: 0; display: grid; gap: 8px; justify-items: start; }
-  .lnk { word-break: break-all; color: var(--p2); font-size: 15px; }
+  .lnk { word-break: break-all; font-size: 15px; }
   .linkgrid canvas { width: 168px; height: 168px; border: 1px solid var(--line); border-radius: 8px; }
-  textarea.mono { font-family: inherit; width: 100%; min-height: 220px; border: 1.5px solid var(--line); border-radius: 14px; padding: 10px; font-size: 16px; background: #fff; }
-  .pvgrid { display: flex; flex-wrap: wrap; gap: 14px; margin: 12px 16px; }
-  .pvgrid figure { width: 256px; }
+  textarea.mono { min-height: 220px; font-size: 16px; }
+  .pvgrid { display: flex; flex-wrap: wrap; gap: 14px; }
+  .pvgrid figure { width: 256px; margin: 0; }
   .pvgrid canvas { width: 256px; height: 384px; border-radius: 10px; border: 1px solid var(--line); display: block; background: #fff; }
   .pvgrid figcaption { font-size: 15px; color: var(--muted); }
   #msCanvas { width: 100%; max-width: 512px; height: auto; border: 1px solid var(--line); border-radius: 10px; cursor: crosshair; touch-action: manipulation; display: block; }
@@ -44,56 +40,56 @@
 <script type="module" src="js/admin.js"></script>
 </head>
 <body>
-<header class="adm-head"><b>ผู้ดูแล วันเพจครูเวร</b><small>หน้านี้ซ่อน ไม่มีลิงก์จากหน้าหลัก</small></header>
-<div class="wrap">
-  <nav class="tabs" role="tablist" aria-label="เมนูผู้ดูแล">
-    <button id="tab-check" class="tab" role="tab" type="button" aria-selected="true" data-panel="p-check">ตรวจข้อมูล</button>
-    <button id="tab-links" class="tab" role="tab" type="button" aria-selected="false" data-panel="p-links">ลิงก์ปักหมุด</button>
-    <button id="tab-preview" class="tab" role="tab" type="button" aria-selected="false" data-panel="p-preview">พรีวิวแม่แบบ</button>
-    <button id="tab-measure" class="tab" role="tab" type="button" aria-selected="false" data-panel="p-measure">โหมดวัด</button>
-    <button id="tab-health" class="tab" role="tab" type="button" aria-selected="false" data-panel="p-health">สถานะระบบ</button>
+<header class="adm-head"><div class="container py-3" style="max-width:1100px"><b>ผู้ดูแล วันเพจครูเวร</b><small>หน้านี้ซ่อน ไม่มีลิงก์จากหน้าหลัก</small></div></header>
+<div class="container adm" style="max-width:1100px">
+  <nav class="nav nav-pills tabs py-3" role="tablist" aria-label="เมนูผู้ดูแล">
+    <button id="tab-check" class="nav-link tab active" role="tab" type="button" aria-selected="true" data-panel="p-check">ตรวจข้อมูล</button>
+    <button id="tab-links" class="nav-link tab" role="tab" type="button" aria-selected="false" data-panel="p-links">ลิงก์ปักหมุด</button>
+    <button id="tab-preview" class="nav-link tab" role="tab" type="button" aria-selected="false" data-panel="p-preview">พรีวิวแม่แบบ</button>
+    <button id="tab-measure" class="nav-link tab" role="tab" type="button" aria-selected="false" data-panel="p-measure">โหมดวัด</button>
+    <button id="tab-health" class="nav-link tab" role="tab" type="button" aria-selected="false" data-panel="p-health">สถานะระบบ</button>
   </nav>
 
   <section id="p-check" class="panel" role="tabpanel">
-    <div class="card"><div class="row"><b id="dataSrc">กำลังโหลด…</b><button id="reload" class="btn alt" type="button">โหลดใหม่</button></div></div>
-    <div class="card"><b>คำเตือน</b><ul id="warnList" class="warns" style="margin-top:8px"></ul></div>
-    <div class="card tbl-scroll"><table class="tbl" id="dataTable"><thead><tr><th>รหัส</th><th>โรงเรียน</th><th>จังหวัด</th><th>ตรา</th><th>ครู</th><th>เบอร์</th></tr></thead><tbody></tbody></table></div>
+    <div class="card shadow-sm"><div class="card-body d-flex flex-wrap gap-2 align-items-center"><b id="dataSrc" class="flex-grow-1">กำลังโหลด…</b><button id="reload" class="btn btn-outline-primary" type="button">โหลดใหม่</button></div></div>
+    <div class="card shadow-sm"><div class="card-body"><b>คำเตือน</b><ul id="warnList" class="warns"></ul></div></div>
+    <div class="card shadow-sm"><div class="card-body table-responsive"><table class="table tbl align-top" id="dataTable"><thead><tr><th>รหัส</th><th>โรงเรียน</th><th>จังหวัด</th><th>ตรา</th><th>ครู</th><th>เบอร์</th></tr></thead><tbody></tbody></table></div></div>
   </section>
 
   <section id="p-links" class="panel" role="tabpanel" hidden>
-    <div class="card">
-      <b>ข้อความปักหมุดใน LINE กลุ่ม</b>
-      <textarea id="pinMsg" class="mono" readonly style="margin-top:8px"></textarea>
-      <div class="row" style="margin-top:8px"><button id="copyPin" class="btn" type="button">คัดลอกข้อความปักหมุด</button><span id="copyState" class="muted" role="status"></span></div>
-    </div>
+    <div class="card shadow-sm"><div class="card-body">
+      <label class="form-label fw-bold" for="pinMsg">ข้อความปักหมุดใน LINE กลุ่ม</label>
+      <textarea id="pinMsg" class="form-control mono" readonly></textarea>
+      <div class="d-flex flex-wrap gap-2 align-items-center mt-2"><button id="copyPin" class="btn btn-primary btn-cta" type="button">คัดลอกข้อความปักหมุด</button><span id="copyState" class="muted" role="status"></span></div>
+    </div></div>
     <div id="linkList" class="linkgrid"></div>
   </section>
 
   <section id="p-preview" class="panel" role="tabpanel" hidden>
-    <div class="card"><label class="ct" for="pvProvince">เลือกจังหวัด</label>
-      <select id="pvProvince" class="select"><option value="">— เลือก —</option><option value="np">นครพนม (np)</option><option value="sn">สกลนคร (sn)</option><option value="mdh">มุกดาหาร (mdh)</option></select>
-      <p id="pvMsg" class="muted" role="status"></p></div>
+    <div class="card shadow-sm"><div class="card-body"><label class="form-label sec-title" for="pvProvince">เลือกจังหวัด</label>
+      <select id="pvProvince" class="form-select form-select-lg"><option value="">— เลือก —</option><option value="np">นครพนม (np)</option><option value="sn">สกลนคร (sn)</option><option value="mdh">มุกดาหาร (mdh)</option></select>
+      <p id="pvMsg" class="muted mt-2 mb-0" role="status"></p></div></div>
     <div id="pvGrid" class="pvgrid"></div>
   </section>
 
   <section id="p-measure" class="panel" role="tabpanel" hidden>
-    <div class="card">
-      <label class="ct" for="msTemplate">เลือกแม่แบบ (ใช้พื้นหลังและเลย์เอาต์ของแม่แบบนี้)</label>
-      <select id="msTemplate" class="select"><option value="">— เลือก —</option></select>
-      <label class="ct" for="msFile" style="display:block;margin-top:12px">หรือเลือกไฟล์พื้นหลังใหม่จากเครื่อง</label>
-      <input id="msFile" type="file" accept="image/*" style="min-height:52px">
-      <p class="muted" style="margin-top:8px">แตะ 3 ครั้ง: (1) มุมซ้ายบนของจุดเด่น (2) มุมขวาล่างของจุดเด่น (3) ขอบบนของแถบคลื่น — แตะครั้งที่ 4 เริ่มใหม่ กรอบสีส้มคือรูป/กล่องครูเวรจากเลย์เอาต์ปัจจุบัน</p>
-    </div>
-    <div class="card"><canvas id="msCanvas" width="512" height="768" aria-label="พื้นหลังสำหรับวัดพิกัด"></canvas>
-      <p id="msPos" class="muted" role="status"></p></div>
-    <div class="card"><label class="ct" for="msOut">ผลลัพธ์ (หน่วยออกแบบ 1024×1536)</label>
-      <textarea id="msOut" class="mono" readonly style="min-height:110px"></textarea>
-      <div class="row" style="margin-top:8px"><button id="msCopy" class="btn" type="button">คัดลอก JSON</button><button id="msReset" class="btn alt" type="button">เริ่มวัดใหม่</button></div></div>
+    <div class="card shadow-sm"><div class="card-body">
+      <label class="form-label sec-title" for="msTemplate">เลือกแม่แบบ (ใช้พื้นหลังและเลย์เอาต์ของแม่แบบนี้)</label>
+      <select id="msTemplate" class="form-select form-select-lg"><option value="">— เลือก —</option></select>
+      <label class="form-label sec-title mt-3" for="msFile">หรือเลือกไฟล์พื้นหลังใหม่จากเครื่อง</label>
+      <input id="msFile" type="file" accept="image/*" class="form-control form-control-lg">
+      <p class="muted mt-2 mb-0">แตะ 3 ครั้ง: (1) มุมซ้ายบนของจุดเด่น (2) มุมขวาล่างของจุดเด่น (3) ขอบบนของแถบคลื่น — แตะครั้งที่ 4 เริ่มใหม่ กรอบสีส้มคือรูป/กล่องครูเวรจากเลย์เอาต์ปัจจุบัน</p>
+    </div></div>
+    <div class="card shadow-sm"><div class="card-body"><canvas id="msCanvas" width="512" height="768" aria-label="พื้นหลังสำหรับวัดพิกัด"></canvas>
+      <p id="msPos" class="muted mt-2 mb-0" role="status"></p></div></div>
+    <div class="card shadow-sm"><div class="card-body"><label class="form-label sec-title" for="msOut">ผลลัพธ์ (หน่วยออกแบบ 1024×1536)</label>
+      <textarea id="msOut" class="form-control mono" readonly style="min-height:110px"></textarea>
+      <div class="d-flex flex-wrap gap-2 mt-2"><button id="msCopy" class="btn btn-primary" type="button">คัดลอก JSON</button><button id="msReset" class="btn btn-outline-primary" type="button">เริ่มวัดใหม่</button></div></div></div>
   </section>
 
   <section id="p-health" class="panel" role="tabpanel" hidden>
-    <div class="card"><button id="healthBtn" class="btn" type="button">ตรวจสถานะตัวอัปโหลด</button>
-      <div id="healthOut" role="status" style="margin-top:10px"></div></div>
+    <div class="card shadow-sm"><div class="card-body"><button id="healthBtn" class="btn btn-primary btn-cta" type="button">ตรวจสถานะตัวอัปโหลด</button>
+      <div id="healthOut" role="status" class="mt-2"></div></div></div>
   </section>
 </div>
 </body>

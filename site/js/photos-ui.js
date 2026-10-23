@@ -2,6 +2,7 @@
 // รูปอยู่ใน memory เท่านั้น (blob + objectURL ของ thumbnail)
 import { processPhoto } from './photos.js';
 import { mergeTemplate, photoRects } from './layout.js';
+import { sheet, panel, confirmDanger, closeAll } from './ui.js';
 
 const MSG_DECODE = 'รูปนี้เปิดไม่ได้ ลองเลือกรูปอื่นหรือถ่ายใหม่';
 
@@ -95,40 +96,60 @@ export function createPhotos(ctx) {
 
   function clear() { for (let i = 0; i < 4; i++) setPhoto(i, null); }
 
+  // เมนูช่องรูป (แผ่นจากล่าง) — "เปลี่ยนรูป" ต้องกด input ในการแตะเดียวกัน (file picker ต้องมี user activation)
   function openSlotSheet(i) {
-    const sheet = $('slotSheet');
-    $('slotSheetTitle').textContent = hintFor(layout(), i);
-    sheet.querySelector('[data-act="swap"]').hidden = !(layout() === '1+3' && i > 0);
-    sheet.dataset.index = i;
-    sheet.showModal();
+    sheet({
+      id: 'slotSheet', title: hintFor(layout(), i),
+      items: [
+        { act: 'replace', text: 'เปลี่ยนรูป' },
+        { act: 'swap', text: '⇄ สลับเป็นภาพใหญ่', hidden: !(layout() === '1+3' && i > 0) },
+        { act: 'label', text: 'ป้ายชื่อรูป' },
+        { act: 'remove', text: '✕ เอารูปออก', danger: true },
+      ],
+      onPick: (act) => onSlotAction(act, i),
+    });
   }
 
-  function onSlotAction(act) {
-    const sheet = $('slotSheet');
-    const i = Number(sheet.dataset.index);
-    sheet.close();
+  async function onSlotAction(act, i) {
     if (act === 'replace') { $('photoGrid').querySelector(`input[data-index="${i}"]`)?.click(); return; }
     if (act === 'label') { openLabelSheet(i); return; }
     if (act === 'swap') swapToMain(i);
-    else if (act === 'remove') setPhoto(i, null);
-    else return;
+    else if (act === 'remove') {
+      const ok = await confirmDanger({ title: 'เอารูปนี้ออก?', text: `${hintFor(layout(), i)} จะว่าง ต้องเลือกรูปใหม่`, confirmText: 'เอารูปออก' });
+      if (!ok || !state.photos[i]) return;
+      setPhoto(i, null);
+    } else return;
     render();
     ctx.onChange();
   }
 
+  // ป้ายชื่อรูป: รายการจาก Sheet + พิมพ์เอง (≤ 24 ตัว) + ไม่ใส่ป้าย
   function openLabelSheet(i) {
-    const sheet = $('labelSheet');
-    sheet.dataset.index = i;
-    $('labelList').innerHTML = (app.model.labels || [])
-      .map((l, k) => `<button type="button" data-k="${k}">${esc(l.label)}</button>`).join('');
-    $('labelInput').value = '';
-    sheet.showModal();
+    const items = (app.model.labels || [])
+      .map((l, k) => `<button type="button" class="list-group-item list-group-item-action sheet-item" data-k="${k}">${esc(l.label)}</button>`).join('');
+    panel({
+      title: 'ป้ายชื่อรูป', cls: 'wp-sheet', position: 'bottom',
+      html: `<div id="labelSheet">`
+        + `<div id="labelList" class="list-group list-group-flush sheet-list label-list">${items}</div>`
+        + `<form id="labelForm" class="input-group input-group-lg my-2">`
+        + `<input id="labelInput" type="text" class="form-control" maxlength="24" placeholder="พิมพ์เอง (ไม่เกิน 24 ตัว)" aria-label="พิมพ์ป้ายชื่อเอง">`
+        + `<button type="submit" class="btn btn-primary px-4">ใช้</button></form>`
+        + `<button type="button" id="labelNone" class="btn btn-outline-primary btn-lg w-100 tap">ไม่ใส่ป้าย</button>`
+        + `<button type="button" id="labelCancel" class="btn btn-light btn-lg w-100 tap mt-2">ยกเลิก</button></div>`,
+      onOpen: () => {
+        $('labelList').onclick = (e) => {
+          const b = e.target.closest('[data-k]');
+          if (b) { const l = app.model.labels[Number(b.dataset.k)]; applyLabel(i, l.label, l.icon); }
+        };
+        $('labelForm').onsubmit = (e) => { e.preventDefault(); const v = $('labelInput').value.trim(); if (v) applyLabel(i, v, 'camera'); };
+        $('labelNone').onclick = () => applyLabel(i, '', null);
+        $('labelCancel').onclick = () => closeAll();
+      },
+    });
   }
 
-  function applyLabel(label, icon) {
-    const sheet = $('labelSheet');
-    const i = Number(sheet.dataset.index);
-    sheet.close();
+  function applyLabel(i, label, icon) {
+    closeAll();
     if (!state.photos[i]) return;
     state.photos[i] = { ...state.photos[i], label: label ? label.trim().slice(0, 24) : '', icon: label ? (icon || 'camera') : null };
     render();
@@ -147,14 +168,6 @@ export function createPhotos(ctx) {
       const tap = e.target.closest('[data-slot]');
       if (tap) openSlotSheet(Number(tap.dataset.slot));
     });
-    $('slotSheet').addEventListener('click', (e) => { const b = e.target.closest('[data-act]'); if (b) onSlotAction(b.dataset.act); });
-    $('labelList').onclick = (e) => {
-      const b = e.target.closest('[data-k]');
-      if (b) { const l = app.model.labels[Number(b.dataset.k)]; applyLabel(l.label, l.icon); }
-    };
-    $('labelForm').onsubmit = (e) => { e.preventDefault(); const v = $('labelInput').value.trim(); if (v) applyLabel(v, 'camera'); };
-    $('labelNone').onclick = () => applyLabel('', null);
-    $('labelCancel').onclick = () => $('labelSheet').close();
   }
 
   return { render, clear, bind };

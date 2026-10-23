@@ -106,7 +106,8 @@ test('save button is purple (not LINE green) when file sharing is unavailable', 
   await page.goto('/?s=changkon8');
   await fillAndCreate(page);
   await expect(page.locator('#shareBtn')).toBeHidden();
-  await expect(page.locator('#saveBtn')).toHaveClass('b1p');
+  await expect(page.locator('#saveBtn')).toHaveClass(/\bbtn-primary\b/);
+  await expect(page.locator('#saveBtn')).not.toHaveClass(/\bbtn-line\b/);
   const bg = await page.locator('#saveBtn').evaluate((el) => getComputedStyle(el).backgroundImage + getComputedStyle(el).backgroundColor);
   expect(bg).not.toContain('6, 199, 85');
   await expect(page.locator('#chromeBox')).toBeVisible();

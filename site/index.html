@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="th">
+<html lang="th" data-bs-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -14,6 +14,8 @@
 <link rel="preload" href="assets/fonts/kanit-700-thai.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/kanit-500-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/kanit-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="vendor/bootstrap.min.css">
+<link rel="stylesheet" href="vendor/sweetalert2.min.css">
 <link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="styles.css">
 <script type="module" src="app.js"></script>
@@ -22,156 +24,117 @@
 
 <!-- แถบเตือนเมื่อเปิดใน LINE (ใช้งานต่อได้) -->
 <div id="lineBar" class="linebar" hidden>
-  <span>เปิดใน Chrome/Safari เพื่อส่งเข้า LINE ได้ในแตะเดียว</span>
-  <a id="lineBarLink" class="linebar-btn" href="#">เปิด</a>
+  <div class="app-col d-flex align-items-center gap-2 px-3 py-2">
+    <span class="flex-grow-1">เปิดใน Chrome/Safari เพื่อส่งเข้า LINE ได้ในแตะเดียว</span>
+    <a id="lineBarLink" class="btn btn-gold tap" href="#">เปิด</a>
+  </div>
 </div>
 
-<main id="formView" class="view">
-  <header class="head">
-    <img id="schoolLogo" class="head-logo" alt="" width="56" height="40" hidden>
-    <div class="head-text">
-      <b id="schoolName">วันเพจครูเวร</b>
-      <button id="changeSchool" type="button" class="linkbtn small" hidden>ไม่ใช่โรงเรียนนี้? เปลี่ยน</button>
+<main id="formView" class="view app-col">
+  <nav class="navbar bg-white border-bottom app-head" aria-label="โรงเรียน">
+    <div class="container-fluid gap-3 px-3 flex-nowrap justify-content-start">
+      <img id="schoolLogo" class="head-logo" alt="" width="56" height="40" hidden>
+      <div class="min-w-0">
+        <b id="schoolName" class="navbar-brand d-block p-0 m-0 text-wrap">วันเพจครูเวร</b>
+        <button id="changeSchool" type="button" class="btn btn-link linkbtn small" hidden>ไม่ใช่โรงเรียนนี้? เปลี่ยน</button>
+      </div>
     </div>
-  </header>
+  </nav>
 
-  <div id="schoolPick" class="card" hidden>
-    <label class="ct" for="schoolSelect">เลือกโรงเรียน</label>
-    <select id="schoolSelect" class="select"></select>
-  </div>
+  <div class="px-3 pt-3 d-grid gap-2">
+    <div id="schoolPick" class="card shadow-sm" hidden>
+      <div class="card-body">
+        <label class="form-label sec-title" for="schoolSelect">เลือกโรงเรียน</label>
+        <select id="schoolSelect" class="form-select form-select-lg"></select>
+      </div>
+    </div>
 
-  <div id="notice" class="notice" hidden></div>
-  <div id="dataBadge" class="notice warn" hidden></div>
-  <div id="loadFail" class="card center" hidden>
-    <p>ยังโหลดรายชื่อครูไม่ได้ ต่ออินเทอร์เน็ตแล้วแตะ ลองใหม่</p>
-    <button id="retryLoad" type="button" class="btn-soft">ลองใหม่</button>
+    <div id="notice" class="alert alert-primary mb-0" role="status" hidden></div>
+    <div id="dataBadge" class="alert alert-warning mb-0" hidden></div>
+    <div id="loadFail" class="card shadow-sm text-center" hidden>
+      <div class="card-body">
+        <p class="mb-2">ยังโหลดรายชื่อครูไม่ได้ ต่ออินเทอร์เน็ตแล้วแตะ ลองใหม่</p>
+        <button id="retryLoad" type="button" class="btn btn-outline-primary tap px-4">ลองใหม่</button>
+      </div>
+    </div>
+    <div id="sentToday" class="alert alert-gold mb-0" hidden></div>
+    <button id="driveBar" type="button" class="btn btn-outline-primary drivebar text-start" aria-live="polite" hidden></button>
   </div>
-  <div id="sentToday" class="sent" hidden></div>
-  <button id="driveBar" type="button" class="drivebar" aria-live="polite" hidden></button>
 
   <!-- ① ครูเวร -->
-  <section id="secTeachers" class="card" aria-labelledby="hTeachers">
-    <h2 id="hTeachers" class="ct">① ครูเวรประจำวันที่</h2>
-    <div class="date-row">
-      <div id="dateText" class="date"></div>
-      <span id="notTodayBadge" class="badge-orange" hidden>ไม่ใช่วันนี้</span>
+  <section id="secTeachers" class="card shadow-sm sec" aria-labelledby="hTeachers">
+    <div class="card-body">
+      <h2 id="hTeachers" class="sec-title"><span class="sec-no">1</span>ครูเวรประจำวันที่</h2>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <div id="dateText" class="date"></div>
+        <span id="notTodayBadge" class="badge rounded-pill badge-orange" hidden>ไม่ใช่วันนี้</span>
+      </div>
+      <button id="editDate" type="button" class="btn btn-link linkbtn">แก้วันที่</button>
+      <input id="dateInput" type="date" class="form-control form-control-lg mt-1" hidden aria-label="วันที่เข้าเวร">
+      <p id="dateMsg" class="msg" hidden></p>
+      <button id="reuseChip" type="button" class="btn btn-gold-soft rounded-pill tap mt-2" hidden></button>
+      <div id="teacherList" class="list-group tlist mt-3" role="group" aria-label="รายชื่อครูเวร"></div>
+      <p id="teacherMsg" class="msg" role="status" hidden></p>
     </div>
-    <button id="editDate" type="button" class="linkbtn">แก้วันที่</button>
-    <input id="dateInput" type="date" class="dateinput" hidden aria-label="วันที่เข้าเวร">
-    <p id="dateMsg" class="msg" hidden></p>
-    <button id="reuseChip" type="button" class="chip" hidden></button>
-    <div id="teacherList" class="tlist" role="group" aria-label="รายชื่อครูเวร"></div>
-    <p id="teacherMsg" class="msg" role="status" hidden></p>
   </section>
 
   <!-- ② รูปถ่าย -->
-  <section id="secPhotos" class="card" aria-labelledby="hPhotos">
-    <h2 id="hPhotos" class="ct">② รูปถ่ายวันนี้ 4 ภาพ <span class="tag">ถ่ายใหม่วันนี้</span></h2>
-    <div id="photoGrid" class="pgrid"></div>
-    <p id="photoMsg" class="msg" role="status" hidden></p>
+  <section id="secPhotos" class="card shadow-sm sec" aria-labelledby="hPhotos">
+    <div class="card-body">
+      <h2 id="hPhotos" class="sec-title"><span class="sec-no">2</span>รูปถ่ายวันนี้ 4 ภาพ <span class="badge rounded-pill badge-gold ms-auto">ถ่ายใหม่วันนี้</span></h2>
+      <div id="photoGrid" class="pgrid"></div>
+      <p id="photoMsg" class="msg" role="status" hidden></p>
+    </div>
   </section>
 
   <!-- ③ พื้นหลัง -->
-  <section id="secBg" class="card" aria-labelledby="hBg">
-    <h2 id="hBg" class="ct">③ พื้นหลัง</h2>
-    <div class="pv">
-      <div class="pv-frame">
-        <canvas id="preview" width="256" height="384" aria-label="ตัวอย่างภาพรายงาน"></canvas>
-        <button id="tapPreview" type="button" class="pv-tap" hidden>แตะเพื่อดูตัวอย่าง</button>
+  <section id="secBg" class="card shadow-sm sec" aria-labelledby="hBg">
+    <div class="card-body">
+      <h2 class="sec-title"><span class="sec-no">3</span><span id="hBg">พื้นหลัง</span></h2>
+      <div class="d-flex gap-3 align-items-start">
+        <div class="pv-frame">
+          <canvas id="preview" width="256" height="384" aria-label="ตัวอย่างภาพรายงาน"></canvas>
+          <button id="tapPreview" type="button" class="pv-tap" hidden>แตะเพื่อดูตัวอย่าง</button>
+        </div>
+        <div class="pv-text">
+          <b>ตัวอย่างสด</b><br>เปลี่ยนพื้นหลัง รูป หรือครูเวร ภาพนี้เปลี่ยนตามทันที<br>
+          <button id="bigPreviewBtn" type="button" class="btn btn-outline-primary tap mt-2">ดูภาพใหญ่</button>
+        </div>
       </div>
-      <p class="pv-text"><b>ตัวอย่างสด</b><br>เปลี่ยนพื้นหลัง รูป หรือครูเวร ภาพนี้เปลี่ยนตามทันที<br>
-        <button id="bigPreviewBtn" type="button" class="linkbtn">ดูภาพใหญ่</button></p>
+      <div id="bgList" class="bgs" role="radiogroup" aria-label="พื้นหลัง"></div>
+      <p id="bgMsg" class="msg" hidden></p>
+      <button id="retryTemplates" type="button" class="btn btn-outline-primary tap px-4 mt-2" hidden>ลองใหม่</button>
     </div>
-    <div id="bgList" class="bgs" role="radiogroup" aria-label="พื้นหลัง"></div>
-    <p id="bgMsg" class="msg" hidden></p>
-    <button id="retryTemplates" type="button" class="btn-soft" hidden>ลองใหม่</button>
   </section>
 
   <div class="cta-space"></div>
-  <div class="cta-wrap">
-    <p id="ctaMsg" class="cta-msg" aria-live="polite"></p>
-    <button id="cta" type="button" class="cta off">สร้างภาพรายงาน</button>
+  <div class="cta-wrap fixed-bottom">
+    <div class="app-col px-3">
+      <p id="ctaMsg" class="cta-msg" aria-live="polite"></p>
+      <button id="cta" type="button" class="btn btn-primary btn-lg w-100 cta off">สร้างภาพรายงาน</button>
+    </div>
   </div>
 </main>
 
 <!-- หน้า "ส่งแล้ว" -->
-<section id="doneView" class="view done" hidden>
-  <button id="doneMenuBtn" type="button" class="menu-btn" aria-label="เมนู" aria-haspopup="true">⋯</button>
-  <div id="doneMenu" class="menu" hidden>
-    <button id="reloadData" type="button">โหลดข้อมูลใหม่</button>
-    <button id="reportIssue" type="button">แจ้งปัญหา</button>
+<section id="doneView" class="view app-col done" hidden>
+  <div class="dropdown done-menu">
+    <button id="doneMenuBtn" type="button" class="btn btn-light rounded-circle menu-btn" aria-label="เมนู" aria-haspopup="true">⋯</button>
+    <div id="doneMenu" class="dropdown-menu dropdown-menu-end show shadow" hidden>
+      <button id="reloadData" type="button" class="dropdown-item">โหลดข้อมูลใหม่</button>
+      <button id="reportIssue" type="button" class="dropdown-item">แจ้งปัญหา</button>
+    </div>
   </div>
-  <div class="ok" aria-hidden="true">✓</div>
-  <h2 id="doneTitle"></h2>
-  <p>ขอบคุณครับ</p>
-  <div id="doneDrive" class="drv" aria-live="polite" hidden></div>
-  <button id="again" type="button" class="btn-main">ทำอีกครั้ง</button>
-  <button id="closeDone" type="button" class="linkbtn">ปิด</button>
-  <p id="doneNote" class="small-note">ถ้าเน็ตหลุด ระบบจะเก็บเข้า Drive ให้เองรอบหน้า</p>
+  <div class="done-ok" aria-hidden="true">✓</div>
+  <h2 id="doneTitle" class="h4 fw-bold text-primary"></h2>
+  <p class="text-body-secondary mb-0">ขอบคุณครับ</p>
+  <div id="doneDrive" class="card card-body drv" aria-live="polite" hidden></div>
+  <button id="again" type="button" class="btn btn-primary btn-lg btn-main">ทำอีกครั้ง</button>
+  <button id="closeDone" type="button" class="btn btn-link linkbtn">ปิด</button>
+  <p id="doneNote" class="small-note text-body-secondary">ถ้าเน็ตหลุด ระบบจะเก็บเข้า Drive ให้เองรอบหน้า</p>
 </section>
 
-<!-- กำลังสร้างภาพ -->
-<div id="busy" class="busy" hidden><div class="busy-box"><div class="spin" aria-hidden="true"></div><p id="busyText">กำลังสร้างภาพ…</p></div></div>
-
-<!-- หน้ายืนยัน -->
-<dialog id="confirm" class="confirm" aria-labelledby="sumTitle">
-  <div class="conf">
-    <img id="confirmImg" alt="ภาพรายงานที่จะส่ง">
-    <div class="sum" id="sumTitle">
-      <div>โรงเรียน <b id="sumSchool"></b></div>
-      <div>ครูเวร <b id="sumTeachers"></b></div>
-      <div>วันที่ <b id="sumDate"></b> <span id="sumNotToday" class="badge-orange" hidden>ไม่ใช่วันนี้</span></div>
-      <div class="sum-size" id="sumSize"></div>
-    </div>
-    <div id="chromeBox" class="chromebox" hidden>
-      <p>เปิดลิงก์ใน Chrome จะส่งเข้า LINE ได้ในแตะเดียว</p>
-      <a id="chromeLink" class="b2" href="#">เปิดใน Chrome</a>
-    </div>
-    <button id="shareBtn" type="button" class="b1">ส่งเข้า LINE</button>
-    <button id="saveBtn" type="button" class="b2">บันทึกรูปลงเครื่อง</button>
-    <p id="confirmMsg" class="conf-msg" aria-live="polite" hidden></p>
-    <button id="editBtn" type="button" class="edit2">แก้ไข</button>
-  </div>
-</dialog>
-
-<!-- iOS: กดค้างเพื่อบันทึก -->
-<dialog id="iosSave" class="confirm">
-  <div class="conf">
-    <img id="iosImg" alt="ภาพรายงาน กดค้างเพื่อบันทึก">
-    <ol class="ios-steps">
-      <li>กดค้างที่รูป</li><li>บันทึกรูปภาพ</li><li>ไปกลุ่ม LINE → แนบรูป</li>
-    </ol>
-    <button id="iosClose" type="button" class="b2">เสร็จแล้ว</button>
-  </div>
-</dialog>
-
-<!-- ภาพใหญ่ -->
-<dialog id="bigPreview" class="confirm">
-  <div class="big-wrap"><canvas id="bigCanvas" width="512" height="768"></canvas></div>
-  <button id="bigClose" type="button" class="b2 big-close">ปิด</button>
-</dialog>
-
-<!-- ช่องรูป: เปลี่ยน/สลับ/ป้าย/เอาออก -->
-<dialog id="slotSheet" class="sheet">
-  <h3 id="slotSheetTitle">ภาพ</h3>
-  <button type="button" data-act="replace">เปลี่ยนรูป</button>
-  <button type="button" data-act="swap">⇄ สลับเป็นภาพใหญ่</button>
-  <button type="button" data-act="label">ป้ายชื่อรูป</button>
-  <button type="button" data-act="remove">✕ เอารูปออก</button>
-  <button type="button" data-act="cancel" class="sheet-cancel">ยกเลิก</button>
-</dialog>
-
-<!-- ป้ายชื่อรูป -->
-<dialog id="labelSheet" class="sheet">
-  <h3>ป้ายชื่อรูป</h3>
-  <div id="labelList" class="label-list"></div>
-  <form id="labelForm" class="label-own" method="dialog">
-    <input id="labelInput" type="text" maxlength="24" placeholder="พิมพ์เอง (ไม่เกิน 24 ตัว)" aria-label="พิมพ์ป้ายชื่อเอง">
-    <button type="submit">ใช้</button>
-  </form>
-  <button type="button" id="labelNone">ไม่ใส่ป้าย</button>
-  <button type="button" id="labelCancel" class="sheet-cancel">ยกเลิก</button>
-</dialog>
+<!-- หน้ายืนยัน / iOS บันทึก / ภาพใหญ่ / ช่องรูป / ป้ายชื่อ / กำลังสร้างภาพ = SweetAlert2 (js/ui.js) -->
 
 </body>
 </html>
