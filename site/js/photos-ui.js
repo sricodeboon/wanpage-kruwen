@@ -60,8 +60,10 @@ export function createPhotos(ctx) {
     showMsg('photoMsg', null);
     for (let k = 0; k < list.length; k++) {
       const i = startIndex + k;
-      const slot = $('photoGrid').querySelector(`.slot[data-index="${i}"]`);
-      slot?.classList.add('busy');
+      // ช่องที่ยังรอทำ (รวมช่องนี้) ขึ้น "กำลังเตรียมรูป…" — render() รอบก่อนสร้างช่องใหม่ จึงต้องใส่ซ้ำทุกรอบ
+      for (let j = i; j < startIndex + list.length; j++) {
+        $('photoGrid').querySelector(`.slot[data-index="${j}"]`)?.classList.add('loading');
+      }
       if (list[k].size > 25 * 1024 * 1024) showMsg('photoMsg', 'ไฟล์ใหญ่กว่า 25 MB กำลังลองย่อ…');
       try {
         const r = await processPhoto(list[k]);
@@ -71,11 +73,11 @@ export function createPhotos(ctx) {
         log('photo error', e.name, e.message);
         showMsg('photoMsg', MSG_DECODE);
       }
-      slot?.classList.remove('busy');
+      // แสดงทีละรูปทันทีที่เสร็จ (HEIC ใช้เวลารูปละ ~2–3 วิ ห้ามรอครบทุกรูปแล้วค่อยแสดง)
+      render();
+      ctx.onChange();
       await new Promise((res) => setTimeout(res, 0));
     }
-    render();
-    ctx.onChange();
   }
 
   function setPhoto(i, p) {

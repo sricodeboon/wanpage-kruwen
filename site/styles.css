@@ -75,7 +75,7 @@ button { cursor: pointer; background: none; border: 0; }
 .slot:not([data-index="0"]) .lbl { font-size: 11px; min-height: 24px; padding: 1px 6px; left: 4px; bottom: 4px; }
 .slot:not([data-index="0"]) .lbl::before { left: -4px; bottom: -4px; width: max(calc(100% + 8px), 48px); height: 48px; }
 .x { position: absolute; right: 5px; top: 5px; background: #fffd; border-radius: 10px; font-size: 12px; padding: 1px 7px; color: var(--p1); z-index: 2; pointer-events: none; }
-.slot.busy::after { content: ''; position: absolute; inset: 0; background: #ffffffb3 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="11" fill="none" stroke="%237d4bc4" stroke-width="3" stroke-dasharray="50 20"/></svg>') center no-repeat; }
+.slot.loading::after { content: 'กำลังเตรียม…'; position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; font-size: 13px; font-weight: 700; color: var(--p1); background: #ffffffcc url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="11" fill="none" stroke="%237d4bc4" stroke-width="3" stroke-dasharray="50 20"/></svg>') center no-repeat; }
 
 /* ---------- ③ พรีวิว + พื้นหลัง ---------- */
 .pv { display: flex; gap: 12px; align-items: flex-start; }
