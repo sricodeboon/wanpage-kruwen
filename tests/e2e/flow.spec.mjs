@@ -1,7 +1,10 @@
 // e2e: ครูเวรเปิดลิงก์โรงเรียน → ติ๊กครู → ใส่รูป 4 ภาพ → เลือกพื้นหลัง → สร้างภาพ → หน้ายืนยัน
 import { test, expect } from '@playwright/test';
+import { routeTestConfig } from './test-config.mjs';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+
+test.beforeEach(async ({ page }) => { await routeTestConfig(page); });
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const csv = (tab) => readFileSync(`${root}docs/sheet-template/${tab}.csv`, 'utf8');

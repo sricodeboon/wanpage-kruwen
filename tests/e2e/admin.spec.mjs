@@ -1,7 +1,10 @@
 // e2e: หน้าผู้ดูแล — ตรวจข้อมูล ลิงก์ปักหมุด พรีวิวแม่แบบ โหมดวัด health
 import { test, expect } from '@playwright/test';
+import { routeTestConfig } from './test-config.mjs';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+
+test.beforeEach(async ({ page }) => { await routeTestConfig(page); });
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const csv = (tab) => readFileSync(`${root}docs/sheet-template/${tab}.csv`, 'utf8');
