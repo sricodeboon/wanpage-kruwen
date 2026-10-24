@@ -237,9 +237,10 @@ function renderHeader() {
   $('changeSchool').hidden = !s;
   const logo = $('schoolLogo');
   const src = logoSrc(s);
-  logo.hidden = !src; // ยังไม่มีตรา = ไม่แสดง
+  const wrap = $('schoolLogoWrap'); // วงกลมขาวรอบตรา
+  logo.hidden = wrap.hidden = !src; // ยังไม่มีตรา = ไม่แสดง
   if (!src) return;
-  logo.onerror = () => { logo.onerror = null; logo.hidden = true; };
+  logo.onerror = () => { logo.onerror = null; logo.hidden = wrap.hidden = true; };
   logo.src = src;
 }
 

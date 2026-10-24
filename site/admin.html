@@ -12,12 +12,14 @@
 <link rel="stylesheet" href="styles.css">
 <style>
   body { padding-bottom: 40px; }
-  .adm-head { background: linear-gradient(90deg, var(--p2), var(--p1)); color: #fff; border-bottom: 3px solid var(--gold); }
+  .adm-head { background: var(--sunset); color: #fff; border-radius: 0 0 26px 26px; box-shadow: 0 8px 24px rgba(225, 29, 116, .25); text-shadow: 0 1px 3px rgba(60, 10, 60, .45); }
   .adm-head b { font-size: 22px; display: block; }
-  .adm-head small { color: var(--gold2); font-size: 15px; }
+  .adm-head small { color: #fff; opacity: .92; font-size: 15px; }
   .tabs { flex-wrap: nowrap; overflow-x: auto; gap: 8px; }
-  .tab { flex: none; min-height: 52px; min-width: 52px; padding: 0 16px; border: 1.5px solid var(--line) !important; background: #fff; font-weight: 700; white-space: nowrap; }
-  .tab.active { border-color: var(--gold) !important; }
+  .tab { flex: none; min-height: 52px; min-width: 52px; padding: 0 18px; border: 0; border-radius: 999px !important; background: #fff; color: var(--tc) !important; font-weight: 700; white-space: nowrap; box-shadow: var(--card-shadow); }
+  #tab-check { --tc: var(--violet); } #tab-links { --tc: var(--ocean-dk); } #tab-preview { --tc: var(--orange-dk); } #tab-measure { --tc: var(--magenta-dk); } #tab-health { --tc: var(--violet-dk); }
+  .tab.active { background: var(--tc) !important; color: #fff !important; }
+  .tabs { padding-left: 2px; padding-right: 2px; }
   .adm .card { margin-bottom: 12px; }
   .btn { min-height: 52px; min-width: 52px; }
   .warns { list-style: none; display: grid; gap: 8px; padding: 0; margin: 8px 0 0; }

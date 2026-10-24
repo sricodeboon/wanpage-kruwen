@@ -4,6 +4,8 @@ import { processPhoto } from './photos.js';
 import { mergeTemplate, photoRects } from './layout.js';
 import { sheet, panel, confirmDanger, closeAll } from './ui.js';
 
+// ไอคอนกล้องในช่องว่าง (ใช้ currentColor)
+const CAMERA = '<svg class="slot-cam" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M4 7h3l2-3h6l2 3h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM8 13a4 4 0 1 0 8 0a4 4 0 1 0-8 0zM10 13a2 2 0 1 0 4 0a2 2 0 1 0-4 0z"/></svg>';
 const MSG_DECODE = 'รูปนี้เปิดไม่ได้ ลองเลือกรูปอื่นหรือถ่ายใหม่';
 
 /**
@@ -51,7 +53,7 @@ export function createPhotos(ctx) {
         + (i === 0 ? '<span class="x">✕ เปลี่ยน</span>' : '')
         + `<button type="button" class="lbl${p.label ? '' : ' add'}" data-label="${i}"><span class="lbl-text">${p.label ? esc(p.label) : '+ ป้ายชื่อ'}</span></button>${input}`;
     } else {
-      slot.innerHTML = `<span><span class="slot-plus">+</span>${hint}</span>${input}`;
+      slot.innerHTML = `<span class="slot-empty">${CAMERA}<b>เพิ่มรูป</b><small>${hint}</small></span>${input}`;
     }
     return slot;
   }

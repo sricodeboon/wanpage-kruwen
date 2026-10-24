@@ -31,9 +31,9 @@
 </div>
 
 <main id="formView" class="view app-col">
-  <nav class="navbar bg-white border-bottom app-head" aria-label="โรงเรียน">
+  <nav class="navbar app-head" aria-label="โรงเรียน">
     <div class="container-fluid gap-3 px-3 flex-nowrap justify-content-start">
-      <img id="schoolLogo" class="head-logo" alt="" width="56" height="40" hidden>
+      <span class="head-logo-wrap" id="schoolLogoWrap" hidden><img id="schoolLogo" class="head-logo" alt="" width="56" height="40" hidden></span>
       <div class="min-w-0">
         <b id="schoolName" class="navbar-brand d-block p-0 m-0 text-wrap">วันเพจครูเวร</b>
         <button id="changeSchool" type="button" class="btn btn-link linkbtn small" hidden>ไม่ใช่โรงเรียนนี้? เปลี่ยน</button>
@@ -62,11 +62,11 @@
   </div>
 
   <!-- ① ครูเวร -->
-  <section id="secTeachers" class="card shadow-sm sec" aria-labelledby="hTeachers">
+  <section id="secTeachers" class="card shadow-sm sec sec-blue" aria-labelledby="hTeachers">
     <div class="card-body">
       <h2 id="hTeachers" class="sec-title"><span class="sec-no">1</span>ครูเวรประจำวันที่</h2>
       <div class="d-flex flex-wrap align-items-center gap-2">
-        <div id="dateText" class="date"></div>
+        <div id="dateText" class="date-pill"></div>
         <span id="notTodayBadge" class="badge rounded-pill badge-orange" hidden>ไม่ใช่วันนี้</span>
       </div>
       <button id="editDate" type="button" class="btn btn-link linkbtn">แก้วันที่</button>
@@ -79,7 +79,7 @@
   </section>
 
   <!-- ② รูปถ่าย -->
-  <section id="secPhotos" class="card shadow-sm sec" aria-labelledby="hPhotos">
+  <section id="secPhotos" class="card shadow-sm sec sec-orange" aria-labelledby="hPhotos">
     <div class="card-body">
       <h2 id="hPhotos" class="sec-title"><span class="sec-no">2</span>รูปถ่ายวันนี้ 4 ภาพ <span class="badge rounded-pill badge-gold ms-auto">ถ่ายใหม่วันนี้</span></h2>
       <div id="photoGrid" class="pgrid"></div>
@@ -88,7 +88,7 @@
   </section>
 
   <!-- ③ พื้นหลัง -->
-  <section id="secBg" class="card shadow-sm sec" aria-labelledby="hBg">
+  <section id="secBg" class="card shadow-sm sec sec-magenta" aria-labelledby="hBg">
     <div class="card-body">
       <h2 class="sec-title"><span class="sec-no">3</span><span id="hBg">พื้นหลัง</span></h2>
       <div class="d-flex gap-3 align-items-start">
@@ -111,7 +111,7 @@
   <div class="cta-wrap fixed-bottom">
     <div class="app-col px-3">
       <p id="ctaMsg" class="cta-msg" aria-live="polite"></p>
-      <button id="cta" type="button" class="btn btn-primary btn-lg w-100 cta off">สร้างภาพรายงาน</button>
+      <button id="cta" type="button" class="btn btn-lg rounded-pill w-100 cta off">สร้างภาพรายงาน</button>
     </div>
   </div>
 </main>
@@ -129,7 +129,7 @@
   <h2 id="doneTitle" class="h4 fw-bold text-primary"></h2>
   <p class="text-body-secondary mb-0">ขอบคุณครับ</p>
   <div id="doneDrive" class="card card-body drv" aria-live="polite" hidden></div>
-  <button id="again" type="button" class="btn btn-primary btn-lg btn-main">ทำอีกครั้ง</button>
+  <button id="again" type="button" class="btn btn-lg rounded-pill btn-sunset btn-main">ทำอีกครั้ง</button>
   <button id="closeDone" type="button" class="btn btn-link linkbtn">ปิด</button>
   <p id="doneNote" class="small-note text-body-secondary">ถ้าเน็ตหลุด ระบบจะเก็บเข้า Drive ให้เองรอบหน้า</p>
 </section>

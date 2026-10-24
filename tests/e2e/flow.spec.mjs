@@ -133,6 +133,8 @@ test('tap targets are at least 52px (label chips 48px)', async ({ page }) => {
   });
   expect(hit[0]).toBeGreaterThanOrEqual(48);
   expect(hit[1]).toBeGreaterThanOrEqual(48);
+  // เลื่อนช่องรูปมากลางจอก่อน (ไม่ให้ถูกปุ่มรายงานที่ติดล่างจอบัง) แล้วค่อยวัดพิกัดแตะ
+  await page.locator('.slot[data-index="1"]').evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
   const slot = await page.locator('.slot[data-index="1"]').boundingBox();
   expect(hit[0] / slot.height, 'พื้นที่แตะป้ายต้องไม่กินช่องรูปเล็กเกินครึ่ง').toBeLessThanOrEqual(0.6);
   // แตะเหนือป้าย (ยังอยู่ในพื้นที่ 48px) ต้องเปิดแผ่นป้ายชื่อ
