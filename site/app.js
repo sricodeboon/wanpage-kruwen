@@ -395,7 +395,7 @@ function openTeachers() {
 // ชื่อในกริด 2 คอลัมน์: ตัดบรรทัดได้เฉพาะหลังยศและระหว่างชื่อ-นามสกุล (ICU ไม่รู้จักชื่อคน จะตัดกลางคำ) — textContent ยังเท่าชื่อเต็มเดิม
 function nameWords(name) {
   const { rank, given, sur } = nameParts(name);
-  return `${esc(rank)}<wbr><span class="w">${esc(given)}</span>${sur ? ` <span class="w">${esc(sur)}</span>` : ''}`;
+  return `${rank ? `<span class="w">${esc(rank)}</span><wbr>` : ''}<span class="w">${esc(given)}</span>${sur ? ` <span class="w">${esc(sur)}</span>` : ''}`;
 }
 
 // ชื่อต้น (ตัดยศ/คำนำหน้า) สำหรับป้ายสั้น

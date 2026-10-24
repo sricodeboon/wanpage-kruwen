@@ -116,6 +116,7 @@ async function expectNamesWhole(page) {
     const words = el.querySelectorAll('.w');
     if (words.length && words[words.length - 1].getBoundingClientRect().bottom > el.getBoundingClientRect().bottom + 1) out.push(`clamped: ${el.textContent}`);
     for (const w of words) if (w.getBoundingClientRect().height > line * 1.5) out.push(`split: ${w.textContent}`);
+    for (const w of words) if (w.getBoundingClientRect().right > el.getBoundingClientRect().right + 1) out.push(`overflow: ${w.textContent}`);
     return out;
   }));
   expect(bad).toEqual([]);
@@ -206,11 +207,48 @@ test.describe('iPhone SE', () => {
     await open(page);
     expect(await scrollH(page)).toBeLessThanOrEqual(1250);
   });
-  test('names wrap only between words and are never clamped away', async ({ page }) => {
-    for (const sid of ['changkon8', 'cocknis']) {
+  test('names wrap only between words and are never clamped away (every school)', async ({ page }) => {
+    for (const sid of Object.keys(snap.teachersBySchool).filter((id) => snap.teachersBySchool[id].length)) {
       await open(page, sid);
-      await page.locator('#moreTeachers').click();
+      if (await page.locator('#moreTeachers').isVisible()) await page.locator('#moreTeachers').click();
       await expectNamesWhole(page);
     }
+  });
+  test('date pill and "แก้วันที่" each stay on one line', async ({ page }) => {
+    await open(page);
+    // บรรทัดเดียว = ตัวอักษรตัวแรกกับตัวสุดท้ายอยู่บรรทัดเดียวกัน และข้อความไม่ล้นกล่อง
+    const bad = await page.evaluate(() => ['#dateText', '#editDate'].flatMap((sel) => {
+      const el = document.querySelector(sel);
+      const tn = [...el.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
+      const top = (i) => { const r = document.createRange(); r.setStart(tn, i); r.setEnd(tn, i + 1); return r.getBoundingClientRect().top; };
+      const n = tn.textContent.trimEnd().length;
+      return Math.abs(top(0) - top(n - 1)) > 4 || el.scrollWidth > el.clientWidth + 1 ? [sel] : [];
+    }));
+    expect(bad).toEqual([]);
+  });
+});
+
+// จอ 320 (iPhone SE รุ่นแรก/Android เล็ก) — ชื่อและวันที่ต้องไม่ตัดกลางคำ
+test.describe('320px', () => {
+  const se = devices['iPhone SE'];
+  test.use({ viewport: { width: 320, height: 568 }, userAgent: se.userAgent, deviceScaleFactor: se.deviceScaleFactor, isMobile: true, hasTouch: true });
+  test('names wrap only between words and are never clamped away (every school)', async ({ page }) => {
+    for (const sid of Object.keys(snap.teachersBySchool).filter((id) => snap.teachersBySchool[id].length)) {
+      await open(page, sid);
+      if (await page.locator('#moreTeachers').isVisible()) await page.locator('#moreTeachers').click();
+      await expectNamesWhole(page);
+    }
+  });
+  test('date pill and "แก้วันที่" each stay on one line', async ({ page }) => {
+    await open(page);
+    // บรรทัดเดียว = ตัวอักษรตัวแรกกับตัวสุดท้ายอยู่บรรทัดเดียวกัน และข้อความไม่ล้นกล่อง
+    const bad = await page.evaluate(() => ['#dateText', '#editDate'].flatMap((sel) => {
+      const el = document.querySelector(sel);
+      const tn = [...el.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
+      const top = (i) => { const r = document.createRange(); r.setStart(tn, i); r.setEnd(tn, i + 1); return r.getBoundingClientRect().top; };
+      const n = tn.textContent.trimEnd().length;
+      return Math.abs(top(0) - top(n - 1)) > 4 || el.scrollWidth > el.clientWidth + 1 ? [sel] : [];
+    }));
+    expect(bad).toEqual([]);
   });
 });

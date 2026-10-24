@@ -194,6 +194,7 @@ body:not([data-state="boot"]):not([data-state="data"]) .boot:not(.boot-out) { di
 .sec-blue .linkbtn { --bs-btn-color: var(--ocean-dk); margin-left: 4px; }
 .t-head { display: flex; align-items: center; gap: 8px; min-height: 44px; }
 .t-head .linkbtn { margin: -4px -4px -4px auto; }
+.t-head .linkbtn { white-space: nowrap; flex: none; }
 .tlist { gap: 6px; }
 /* กริด 2 คอลัมน์ (ไม่ใช่ .list-group แล้ว → ตั้งตัวแปรของ .list-group-item เอง) */
 .tgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
@@ -206,7 +207,7 @@ body:not([data-state="boot"]):not([data-state="data"]) .boot:not(.boot-out) { di
 .t[aria-disabled="true"] { opacity: .5; }
 .ck { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #c9d6e6; background: #fff; display: grid; place-items: center; font-weight: 700; color: #fff; font-size: 15px; flex: none; }
 .t[aria-checked="true"] .ck { background: var(--ocean); border-color: var(--ocean); box-shadow: 0 2px 6px rgba(30, 136, 229, .4); }
-.t-name .w { display: inline-block; max-width: 100%; overflow-wrap: anywhere; }
+.t-name .w { display: inline-block; white-space: nowrap; } /* ยศ/ชื่อ/สกุล ตัดบรรทัดได้แค่ระหว่างคำ */
 .t > span:last-child { min-width: 0; }
 .t-name { font-size: 16px; font-weight: 700; line-height: 1.2; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
 /* เบอร์ซ่อนในกริด (ยังอยู่ใน DOM) — แสดงเมื่อเลือกแล้ว */
@@ -402,6 +403,15 @@ html { scroll-padding-bottom: calc(var(--cta-h, 96px) + 12px); }
 #bigCanvas { width: 100%; max-width: 512px; height: auto; border-radius: 12px; }
 .log-box { min-height: 180px; font-size: 13px; margin-top: 8px; }
 
+/* จอแคบ (iPhone SE ฯลฯ): ย่อให้คำที่ยาวที่สุดในกริด 2 คอลัมน์ยังอยู่บรรทัดเดียว */
+@media (max-width: 380px) {
+  .sec > .card-body { padding-left: 12px; padding-right: 12px; }
+  .tgrid { gap: 5px; }
+  .tlist > .list-group-item { gap: 6px; padding: 6px 6px; }
+  .ck { width: 22px; height: 22px; font-size: 13px; }
+  .t-name { font-size: 15px; }
+  .date-pill { font-size: 16px; padding: 3px 10px; white-space: nowrap; }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
   .brand-blink, .cta-mascot { display: none; }
