@@ -1,0 +1,114 @@
+{
+ "site/assets/bg/np-01.v1.webp": {
+  "ok": true,
+  "landmark_top_y": 901,
+  "checks": [
+   {
+    "name": "aspect",
+    "ok": true,
+    "value": 0.6667,
+    "rule": "2:3 (±1%)"
+   },
+   {
+    "name": "middle_mean",
+    "ok": true,
+    "value": 241.5,
+    "rule": ">= 215"
+   },
+   {
+    "name": "middle_std",
+    "ok": true,
+    "value": 8.8,
+    "rule": "<= 14"
+   },
+   {
+    "name": "band",
+    "ok": true,
+    "value": 110.2,
+    "rule": "mean y>=90% <= 120"
+   },
+   {
+    "name": "green",
+    "ok": true,
+    "value": "0.00% / 0.00% (lower)",
+    "rule": "<= 8% / <= 15%"
+   },
+   {
+    "name": "landmark",
+    "ok": true,
+    "value": 901,
+    "rule": "top_y >= 895"
+   }
+  ],
+  "metrics": {
+   "mid": {
+    "mean": 241.52886802862955,
+    "std": 8.844576093950872
+   },
+   "band": {
+    "mean": 110.17555844159071,
+    "std": 57.68117774655915
+   },
+   "greenAll": 0.0000095367431640625,
+   "greenLower": 0.000031775352494577004,
+   "width": 1536,
+   "height": 2304
+  }
+ },
+ "assets/reference/bg-01-phrathat-naga.png": {
+  "ok": true,
+  "landmark_top_y": 898,
+  "checks": [
+   {
+    "name": "aspect",
+    "ok": true,
+    "value": 0.6667,
+    "rule": "2:3 (±1%)"
+   },
+   {
+    "name": "middle_mean",
+    "ok": true,
+    "value": 241.1,
+    "rule": ">= 215"
+   },
+   {
+    "name": "middle_std",
+    "ok": true,
+    "value": 8.8,
+    "rule": "<= 14"
+   },
+   {
+    "name": "band",
+    "ok": true,
+    "value": 109.8,
+    "rule": "mean y>=90% <= 120"
+   },
+   {
+    "name": "green",
+    "ok": true,
+    "value": "0.00% / 0.01% (lower)",
+    "rule": "<= 8% / <= 15%"
+   },
+   {
+    "name": "landmark",
+    "ok": true,
+    "value": 898,
+    "rule": "top_y >= 895"
+   }
+  ],
+  "metrics": {
+   "mid": {
+    "mean": 241.14553935526038,
+    "std": 8.788414090014077
+   },
+   "band": {
+    "mean": 109.8030694762892,
+    "std": 58.88920273048876
+   },
+   "greenAll": 0.000016530354817708332,
+   "greenLower": 0.00005507727765726681,
+   "width": 1024,
+   "height": 1536
+  }
+ }
+}

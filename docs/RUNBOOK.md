@@ -61,6 +61,7 @@
 - [ ] บวก `app_version` ใน `site/config.json`
 - [ ] `npm run validate` ผ่าน
 - [ ] `npm test` + `npm run goldens` + `npm run e2e` ผ่านใน CI (CI ubuntu คือผู้ตัดสิน golden; บน mac `npm run goldens` เตือนอย่างเดียว ใช้ `node tools/goldens.mjs --strict` ถ้าอยากให้ล้ม) — ถ้าตั้งใจเปลี่ยนภาพ: รัน workflow `goldens-update` แล้ว commit ภาพจาก artifact
+- [ ] ถ้าเคยรัน `goldens.mjs --only …` / `--include-inactive` (หน้าดูไปอยู่ `tests/golden/actual/index.html`): รัน `npm run goldens` **เต็ม** อีกรอบก่อน commit ให้ `docs/goldens/index.html` มีครบทุกแม่แบบ active
 - [ ] `tools/smoke-upload.sh <EXEC_URL> <APP_KEY>` ผ่าน (ถ้าแก้ Apps Script)
 - [ ] ทดสอบ Android อย่างน้อย 1 เครื่อง (`docs/device-qa.md`)
 - [ ] อัปเดต `docs/CHANGELOG.md` + git tag

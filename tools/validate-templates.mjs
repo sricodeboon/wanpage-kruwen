@@ -22,15 +22,19 @@ for (const t of cfg.templates || []) {
   const r = mergeTemplate(cfg.common, t);
   const v = validateTemplate(r);
   v.errors.forEach(e => fail(t.id, e));
+  // แม่แบบที่ปิดอยู่และยังไม่อนุมัติ (รอภาพจริง เช่น ชุด v3) ยังไม่ต้องมีไฟล์ — มีเมื่อไรก็ตรวจตามปกติ
+  const pending = t.active === false && !t.approvedAt;
+  let missing = 0;
   for (const [key, w, h, cap] of [['file', 1536, 2304, 450 * 1024], ['thumb', 240, 360, 15 * 1024]]) {
     const f = path.join(SITE, t[key] || '');
+    if (t[key] && pending && !fs.existsSync(f)) { missing++; continue; }
     if (!t[key] || !fs.existsSync(f)) { fail(t.id, `ไม่พบไฟล์ ${key}: ${t[key]}`); continue; }
     const size = fs.statSync(f).size;
     if (size > cap) fail(t.id, `${key} ใหญ่เกิน ${cap} ไบต์ (${size})`);
     const m = await sharp(f).metadata();
     if (m.format !== 'webp' || m.width !== w || m.height !== h) fail(t.id, `${key} ต้องเป็น webp ${w}×${h} (ได้ ${m.format} ${m.width}×${m.height})`);
   }
-  if (bad === before) console.log(`ok   ${t.id}${t.active === false ? ' (ปิดอยู่)' : ''}`);
+  if (bad === before) console.log(`ok   ${t.id}${t.active === false ? ' (ปิดอยู่)' : ''}${missing ? ' · รอภาพ' : ''}`);
 }
 if (bad) { console.error(`${bad} ข้อผิดพลาด`); process.exit(1); }
 console.log(`ผ่านทั้ง ${cfg.templates.length} แบบ`);

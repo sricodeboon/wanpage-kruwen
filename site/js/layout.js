@@ -5,13 +5,17 @@ import { formatThaiDate } from './thaidate.js';
 
 const DESIGN_W = 1024;
 const DESIGN_H = 1536;
-export const LAYOUTS = ['1+3', '3+1', '2+2', '2x2', 'Z', 'mosaic-L', 'mosaic-R', 'L1R3', 'R1L3'];
+export const LAYOUTS = ['1+3', '3+1', '2+2', '2x2', 'Z', 'mosaic-L', 'mosaic-R', 'L1R3', 'R1L3', 'C1+2+1', 'C2+2'];
+// ฉาก: bottom = สถานที่กลางล่าง (ของเดิม) / side-L, side-R = สถานที่เต็มคอลัมน์ซ้าย/ขวา รูปอยู่คอลัมน์ฝั่งตรงข้าม
+export const SCENES = ['bottom', 'side-L', 'side-R'];
+export const SIDE_LAYOUTS = ['C1+2+1', 'C2+2']; // เลย์เอาต์คอลัมน์แคบ ใช้ได้เฉพาะฉาก side
 const MAIN_LABEL_MIN_W = 600; // ป้ายใหญ่เฉพาะรูปหลักที่กว้างพอ (2x2/2+2 กว้าง 455.75 ใช้ป้ายปกติ)
 const PROVINCES = ['np', 'sn', 'mdh'];
-const KEEP = ['id', 'version', 'active', 'name', 'province', 'landmark', 'band', 'file', 'thumb', 'approvedAt'];
+const KEEP = ['id', 'version', 'active', 'name', 'province', 'scene', 'landmark', 'band', 'file', 'thumb', 'approvedAt'];
 
 const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 const clone = v => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
+const isSide = r => r.scene === 'side-L' || r.scene === 'side-R';
 
 function deepMerge(target, src) {
   for (const [k, v] of Object.entries(src || {})) {
@@ -26,7 +30,14 @@ export function mergeTemplate(common, tpl) {
   for (const k of KEEP) if (tpl[k] !== undefined) out[k] = clone(tpl[k]);
   out.palette = clone(tpl.palette) || {};
   out.photo_layout = tpl.photo_layout || '1+3';
-  return deepMerge(out, tpl.overrides);
+  out.scene = tpl.scene || 'bottom';
+  deepMerge(out, tpl.overrides);
+  // ฉาก side ที่ไม่ระบุ landmark → คอลัมน์มาตรฐาน side.landmark ชิดขอบฝั่งสถานที่ (ฉาก bottom ไม่แตะ)
+  if (isSide(out) && !out.landmark && out.side?.landmark) {
+    const L = out.side.landmark;
+    out.landmark = { x: out.scene === 'side-L' ? 0 : DESIGN_W - L.w, y: L.y, w: L.w, h: L.h };
+  }
+  return out;
 }
 
 // ---------- ข้อความไทย ----------
@@ -176,6 +187,27 @@ const GEOM = {
   // รูปหลักสูงเต็มโซน + 3 รูปเล็กซ้อนแนวตั้ง — ใช้ได้เฉพาะ landmark ต่ำ (โซน ≥ minSideZone)
   L1R3: (P, f, errors) => column3(P, f, errors, false),
   R1L3: (P, f, errors) => column3(P, f, errors, true),
+  // ---- คอลัมน์แคบ (ฉาก side) — f.x0/f.W = คอลัมน์รูป, f.H = ถึง band.top_y − bandGap ----
+  // รูปหลักบน / คู่กลาง / กว้างล่าง: a = H − 2g แบ่งตาม side.ratioC1
+  'C1+2+1': (P, f, errors) => {
+    if (!f.side) { errors.push('C1+2+1 ใช้ได้เฉพาะฉาก side-L/side-R'); return []; }
+    const a = f.H - 2 * f.g, R = f.side.ratioC1;
+    const mh = Math.round(a * R.main), ph = Math.round(a * R.pair), wh = a - mh - ph;
+    if (mh < P.minMainH || ph < P.minSmallH || wh < P.minSmallH) {
+      errors.push(`พื้นที่รูป ${a} ไม่พอ (หลัก ${mh} ≥ ${P.minMainH}, คู่ ${ph}/กว้าง ${wh} ≥ ${P.minSmallH})`);
+    }
+    const cw = (f.W - f.g) / 2, y1 = f.top + mh + f.g, y2 = y1 + ph + f.g;
+    return [{ x: f.x0, y: f.top, w: f.W, h: Math.max(0, mh) },
+      { x: f.x0, y: y1, w: cw, h: Math.max(0, ph) }, { x: f.x0 + cw + f.g, y: y1, w: cw, h: Math.max(0, ph) },
+      { x: f.x0, y: y2, w: f.W, h: Math.max(0, wh) }];
+  },
+  // ตาราง 2×2 ชิดบน แถวสูงไม่เกิน side.maxRowC2x2 (กันช่องรูปเป็นแนวตั้งผิดธรรมชาติ)
+  'C2+2': (P, f, errors) => {
+    if (!f.side) { errors.push('C2+2 ใช้ได้เฉพาะฉาก side-L/side-R'); return []; }
+    const row = Math.min((f.H - f.g) / 2, f.side.maxRowC2x2);
+    if (row < P.minMainH) errors.push(`แถวรูปสูง ${row} < ${P.minMainH}`);
+    return grid2(f, [Math.max(0, row), Math.max(0, row)]);
+  },
 };
 
 function grid2(f, [up, lo]) {
@@ -203,7 +235,21 @@ function column3(P, f, errors, mainRight) {
     ...[0, 1, 2].map(i => ({ x: sx, y: f.top + i * (sh + f.g), w: sw, h: sh }))];
 }
 
+// ฉาก side: คอลัมน์รูปอยู่ฝั่งตรงข้ามสถานที่ เว้น gutter; ล่างสุด = band.top_y − bandGap (ไม่ใช้ zoneCap)
+function sideGeometry(r, dy) {
+  const P = r.photos, S = r.side, lm = r.landmark;
+  const errors = [];
+  if (!S) return { rects: [], errors: ['ไม่มี common.side สำหรับฉาก ' + r.scene] };
+  const top = P.main.y + dy;
+  const limit = r.band.top_y - S.bandGap;
+  const x0 = r.scene === 'side-L' ? lm.x + lm.w + S.gutter : lm.x - S.gutter - S.colW;
+  const f = { dy, top, limit, landmarkY: lm.y, x0, W: S.colW, g: P.gap, H: limit - top, side: S };
+  const rects = (GEOM[r.photo_layout] || GEOM['C1+2+1'])(P, f, errors);
+  return { rects, errors };
+}
+
 function photoGeometry(r, dy = 0) {
+  if (isSide(r)) return sideGeometry(r, dy);
   const P = r.photos;
   const limit = r.landmark.y - P.landmarkGap; // ขอบล่างสุดที่รูปลงได้
   const top = P.main.y + dy;
@@ -373,7 +419,9 @@ export function computeLayout(resolved, model, measure) {
 
   const { rects: photos, errors: warnings } = photoGeometry(r, dy);
   const items = model.photos || [];
-  const labels = photos.map((p, i) => labelFor(measure, r.label, p, items[i], i === 0 && p.w >= MAIN_LABEL_MIN_W));
+  // ฉาก side: ช่องคู่แคบ 266.75 → ใช้ค่าป้ายของ common.side.label ทับ (แม่แบบเดิมได้ r.label เดิมทุกค่า)
+  const LC = isSide(r) && r.side?.label ? { ...r.label, ...r.side.label } : r.label;
+  const labels = photos.map((p, i) => labelFor(measure, LC, p, items[i], i === 0 && p.w >= MAIN_LABEL_MIN_W));
 
   return {
     logo: logoRect(r.logo, model.logoSize),
@@ -395,7 +443,13 @@ const inCanvas = q => q.x >= 0 && q.y >= 0 && q.x + q.w <= DESIGN_W + 1e-6 && q.
 
 export function validateTemplate(r) {
   const errors = [];
+  const scene = r.scene ?? 'bottom', side = isSide(r);
+  if (!SCENES.includes(scene)) errors.push(`scene "${scene}" ไม่ถูกต้อง`);
   if (!LAYOUTS.includes(r.photo_layout)) errors.push(`photo_layout "${r.photo_layout}" ไม่ถูกต้อง`);
+  else if (side !== SIDE_LAYOUTS.includes(r.photo_layout)) {
+    errors.push(side ? `ฉาก ${scene} ต้องใช้ ${SIDE_LAYOUTS.join('/')} (ได้ "${r.photo_layout}")`
+      : `photo_layout "${r.photo_layout}" ใช้ได้เฉพาะฉาก side-L/side-R`);
+  }
   if (!PROVINCES.includes(r.province)) errors.push(`province "${r.province}" ไม่ถูกต้อง`);
   if (!r.landmark || !r.band) {
     errors.push('ไม่มี landmark/band');
@@ -415,7 +469,8 @@ export function validateTemplate(r) {
       if (g.rects.length !== 4) errors.push(`dy ${dy}: ช่องรูปต้องมี 4 ช่อง (ได้ ${g.rects.length})`);
       g.rects.forEach((q, i) => {
         if (dy === 0) rects[`photo${i}`] = q;
-        if (q.y + q.h + P.landmarkGap > r.landmark.y + 1e-6) errors.push(`dy ${dy}: รูป ${i} ทับจุดเด่น (ล่าง ${q.y + q.h})`);
+        if (!side && q.y + q.h + P.landmarkGap > r.landmark.y + 1e-6) errors.push(`dy ${dy}: รูป ${i} ทับจุดเด่น (ล่าง ${q.y + q.h})`);
+        if (side) sideRules(r, q, i, dy, errors);
         if (dy !== 0 && !inCanvas(q)) errors.push(`dy ${dy}: photo${i} อยู่นอกภาพ 1024×1536`);
         const minH = i === 0 ? P.minMainH : P.minSmallH;
         if (q.h < minH - 1e-6) errors.push(`dy ${dy}: รูป ${i} สูง ${q.h} < ${minH}`);
@@ -424,6 +479,20 @@ export function validateTemplate(r) {
         for (let j = 0; j < i; j++) if (overlaps(q, g.rects[j])) errors.push(`dy ${dy}: รูป ${j} กับรูป ${i} ทับกัน`);
       });
     }
+  }
+
+  if (side) {
+    // สถานที่ต้องอยู่ใต้ที่อยู่ 2 บรรทัด (โรงเรียน 2 บรรทัด + ที่อยู่ 2 บรรทัด) และไม่ทับข้อความส่วนหัว
+    const headBottom = r.address.y + (r.school.twoLineDy || 0) + Math.max(r.address.h, r.address.twoLineH || 0);
+    if (r.landmark.y < headBottom - 1e-6) errors.push(`landmark.y ${r.landmark.y} < ${headBottom} (ทับที่อยู่ 2 บรรทัด)`);
+    for (const k of ['logo', 'title', 'school', 'address']) {
+      if (overlaps(r.landmark, rects[k])) errors.push(`landmark ทับ ${k}`);
+    }
+    // คอลัมน์สถานที่ต้องชิดขอบฝั่งของฉาก และไม่ลงไปทับกล่องครูเวรบนแถบคลื่น
+    const lm = r.landmark;
+    if (scene === 'side-L' && lm.x !== 0) errors.push(`side-L: landmark.x ต้องเป็น 0 (ได้ ${lm.x})`);
+    if (scene === 'side-R' && Math.abs(lm.x + lm.w - DESIGN_W) > 1e-6) errors.push(`side-R: landmark.x+w ต้องเป็น ${DESIGN_W} (ได้ ${lm.x + lm.w})`);
+    if (lm.y + lm.h > r.band.top_y + 4) errors.push(`landmark ล่าง ${lm.y + lm.h} > band.top_y+4 ${r.band.top_y + 4} (ทับกล่องครูเวร)`);
   }
 
   const D = r.duty;
@@ -439,6 +508,18 @@ export function validateTemplate(r) {
     if (!inCanvas(q)) errors.push(`${k} อยู่นอกภาพ 1024×1536`);
   }
   return { ok: errors.length === 0, errors };
+}
+
+// กฎช่องรูปของฉาก side (spec v3 §1.5 ข้อ 2–3): อยู่ในคอลัมน์ฝั่งตรงข้ามสถานที่ เว้น gutter และอยู่เหนือแถบคลื่น
+function sideRules(r, q, i, dy, errors) {
+  if (!r.side) return; // ไม่มี common.side → sideGeometry รายงาน error แล้ว
+  const S = r.side, lm = r.landmark, M = r.photos.main;
+  // ขอบกระดาษเดียวกับแม่แบบเดิม (x 46–978) — กัน overrides.side ที่แก้ไม่ครบจนรูปชิดขอบภาพ
+  if (q.x < M.x - 1e-6 || q.x + q.w > M.x + M.w + 1e-6) errors.push(`dy ${dy}: รูป ${i} เลยขอบกระดาษ ${M.x}–${M.x + M.w} (x ${q.x}–${q.x + q.w})`);
+  if (r.scene === 'side-L' && q.x < lm.x + lm.w + S.gutter - 1e-6) errors.push(`dy ${dy}: รูป ${i} ล้ำคอลัมน์สถานที่ซ้าย (x ${q.x})`);
+  if (r.scene === 'side-R' && q.x + q.w > lm.x - S.gutter + 1e-6) errors.push(`dy ${dy}: รูป ${i} ล้ำคอลัมน์สถานที่ขวา (ขวา ${q.x + q.w})`);
+  if (overlaps(q, lm)) errors.push(`dy ${dy}: รูป ${i} ทับสถานที่`);
+  if (q.y + q.h + S.bandGap > r.band.top_y + 1e-6) errors.push(`dy ${dy}: รูป ${i} ทับแถบคลื่น (ล่าง ${q.y + q.h})`);
 }
 
 export function filterTemplates(templates, province) {

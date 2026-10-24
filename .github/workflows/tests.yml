@@ -17,7 +17,7 @@ jobs:
       - run: npm run validate
       - run: npx playwright install --with-deps chromium
       # CI (ubuntu) คือผู้ตัดสิน golden (goldens.mjs เข้มเฉพาะ linux; เครื่อง dev เตือนอย่างเดียว)
-      - run: npm run goldens
+      - run: npm run goldens -- --strict
       - run: npm run e2e
       - name: อัปโหลดภาพที่ต่างจาก golden
         if: failure()

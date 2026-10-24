@@ -54,6 +54,21 @@ test('duty teacher flow produces a 1536x2304 report', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('inactive templates (v3 waiting for real images) never show up or load', async ({ page }) => {
+  const asked = [];
+  page.on('request', (r) => asked.push(r.url()));
+  await routeSheets(page);
+  await page.goto('/?s=changkon8');
+  const np = JSON.parse(readFileSync(`${root}site/templates.json`, 'utf8')).templates.filter((t) => t.province === 'np');
+  const off = np.filter((t) => t.active === false);
+  expect(off.length).toBeGreaterThan(0);
+  await expect(page.locator('#bgList [data-bg]')).toHaveCount(np.length - off.length);
+  for (const t of off) {
+    await expect(page.locator(`#bgList [data-bg="${t.id}"]`)).toHaveCount(0);
+    expect(asked.some((u) => u.includes(`/${t.id}.v`))).toBe(false);
+  }
+});
+
 test('report button explains what is missing', async ({ page }) => {
   await routeSheets(page);
   await page.goto('/?s=changkon8');
