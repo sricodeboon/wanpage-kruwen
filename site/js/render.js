@@ -78,8 +78,9 @@ export function drawCover(ctx, img, rect, focalY = 0.5, radius = 0) {
   const s = sizeOf(img);
   if (!s) return;
   const k = Math.max(rect.w / s.w, rect.h / s.h);
-  const sw = rect.w / k, sh = rect.h / k;
-  const sx = (s.w - sw) / 2;
+  // ตัดให้อยู่ในขอบภาพ: ทศนิยมเพี้ยนเล็กน้อยทำให้กรอบต้นทางเกินภาพ แล้ว Safari/WebKit จะไม่วาดอะไรเลย
+  const sw = Math.min(rect.w / k, s.w), sh = Math.min(rect.h / k, s.h);
+  const sx = Math.max((s.w - sw) / 2, 0);
   const sy = Math.min(Math.max((s.h - sh) * focalY, 0), s.h - sh);
   ctx.save();
   roundRectPath(ctx, rect.x, rect.y, rect.w, rect.h, radius);

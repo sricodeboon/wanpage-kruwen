@@ -127,6 +127,18 @@ describe('drawCover', () => {
     expect(d.args.slice(1)).toEqual([0, 250, 1000, 500, 10, 20, 400, 200]);
     expect(ctx.calls.some(c => c.name === 'clip')).toBe(true);
   });
+  it('กรอบต้นทางไม่เกินขอบภาพ แม้ทศนิยมเพี้ยน (Safari ไม่วาดถ้าเกิน)', () => {
+    // ภาพ 800×600 ลงกรอบ 920×270: 920 / (920 / 800) = 800.0000000000001 → sx ติดลบ
+    for (const [w, h, rw, rh] of [[800, 600, 920, 270], [803, 1070, 920, 270], [1600, 1200, 1380, 405]]) {
+      const ctx = createFakeCtx();
+      drawCover(ctx, img('x', w, h), { x: 0, y: 0, w: rw, h: rh }, 0.45);
+      const [, sx, sy, sw, sh] = ctx.calls.find(c => c.name === 'drawImage').args;
+      expect(sx).toBeGreaterThanOrEqual(0);
+      expect(sy).toBeGreaterThanOrEqual(0);
+      expect(sx + sw).toBeLessThanOrEqual(w);
+      expect(sy + sh).toBeLessThanOrEqual(h);
+    }
+  });
 });
 
 describe('canvasToBlob', () => {
