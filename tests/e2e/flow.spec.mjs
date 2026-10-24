@@ -8,6 +8,8 @@ test.beforeEach(async ({ page }) => { await routeTestConfig(page); });
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const csv = (tab) => readFileSync(`${root}docs/sheet-template/${tab}.csv`, 'utf8');
+// จำนวนครูช่างกลฯ 8 ในข้อมูลสำรอง (snapshot อัปเดตจาก Sheet ทุกสัปดาห์ จึงไม่ฝังตัวเลข)
+const snapshotTeachers = JSON.parse(readFileSync(`${root}site/data/snapshot.json`, 'utf8')).teachersBySchool.changkon8.length;
 const fixtures = [1, 2, 3, 4].map((n) => `${root}tests/golden/fixtures/photo${n}.jpg`);
 
 async function routeSheets(page) {
@@ -93,7 +95,7 @@ test('blocked localStorage + offline still boots from the snapshot', async ({ pa
   await page.route(/docs\.google\.com\/spreadsheets\//, (route) => route.abort());
   await page.goto('/?s=changkon8');
   await expect(page.locator('#dataBadge')).toHaveText('ใช้ข้อมูลสำรอง (ไม่ได้ต่อเน็ต)');
-  await expect(page.locator('.t')).toHaveCount(4);
+  await expect(page.locator('.t')).toHaveCount(snapshotTeachers);
   await page.locator('.t').first().click();
   await expect(page.locator('.t').first()).toHaveAttribute('aria-checked', 'true');
   await expect(page.locator('#ctaMsg')).toHaveText('เลือกรูปอีก 4 ภาพ');
