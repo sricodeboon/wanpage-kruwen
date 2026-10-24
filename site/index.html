@@ -64,17 +64,18 @@
   <!-- ① ครูเวร -->
   <section id="secTeachers" class="card shadow-sm sec sec-blue" aria-labelledby="hTeachers">
     <div class="card-body">
-      <h2 id="hTeachers" class="sec-title"><span class="sec-no">1</span>ครูเวรประจำวันที่</h2>
+      <h2 id="hTeachers" class="sec-title"><span class="sec-no">1</span>ครูเวรประจำวันที่ <span id="teacherCount" class="badge rounded-pill badge-blue ms-auto" aria-live="polite" hidden></span></h2>
       <div class="d-flex flex-wrap align-items-center gap-2">
         <div id="dateText" class="date-pill"></div>
         <span id="notTodayBadge" class="badge rounded-pill badge-orange" hidden>ไม่ใช่วันนี้</span>
       </div>
       <button id="editDate" type="button" class="btn btn-link linkbtn">แก้วันที่</button>
-      <input id="dateInput" type="date" class="form-control form-control-lg mt-1" hidden aria-label="วันที่เข้าเวร">
+      <input id="dateInput" type="hidden" aria-label="วันที่เข้าเวร">
       <p id="dateMsg" class="msg" hidden></p>
       <button id="reuseChip" type="button" class="btn btn-gold-soft rounded-pill tap mt-2" hidden></button>
       <div id="teacherList" class="list-group tlist mt-3" role="group" aria-label="รายชื่อครูเวร"></div>
       <p id="teacherMsg" class="msg" role="status" hidden></p>
+      <button id="nextPhotos" type="button" class="btn btn-outline-primary btn-lg w-100 tap mt-3" hidden>ถัดไป: รูปถ่าย ↓</button>
     </div>
   </section>
 
@@ -83,7 +84,7 @@
     <div class="card-body">
       <h2 id="hPhotos" class="sec-title"><span class="sec-no">2</span>รูปถ่ายวันนี้ 4 ภาพ <span class="badge rounded-pill badge-gold ms-auto">ถ่ายใหม่วันนี้</span></h2>
       <div id="photoGrid" class="pgrid"></div>
-      <p id="photoMsg" class="msg" role="status" hidden></p>
+      <p id="photoMsg" class="msg" role="alert" hidden></p>
     </div>
   </section>
 
@@ -91,6 +92,7 @@
   <section id="secBg" class="card shadow-sm sec sec-magenta" aria-labelledby="hBg">
     <div class="card-body">
       <h2 class="sec-title"><span class="sec-no">3</span><span id="hBg">พื้นหลัง</span></h2>
+      <p id="bgPicked" class="bg-picked" aria-live="polite" hidden></p>
       <div class="d-flex gap-3 align-items-start">
         <div class="pv-frame">
           <canvas id="preview" width="256" height="384" aria-label="ตัวอย่างภาพรายงาน"></canvas>

@@ -5,7 +5,8 @@ import { formatThaiDate } from './thaidate.js';
 
 const DESIGN_W = 1024;
 const DESIGN_H = 1536;
-const LAYOUTS = ['1+3', '2x2', '2+2'];
+export const LAYOUTS = ['1+3', '3+1', '2+2', '2x2', 'Z', 'mosaic-L', 'mosaic-R', 'L1R3', 'R1L3'];
+const MAIN_LABEL_MIN_W = 600; // ป้ายใหญ่เฉพาะรูปหลักที่กว้างพอ (2x2/2+2 กว้าง 455.75 ใช้ป้ายปกติ)
 const PROVINCES = ['np', 'sn', 'mdh'];
 const KEEP = ['id', 'version', 'active', 'name', 'province', 'landmark', 'band', 'file', 'thumb', 'approvedAt'];
 
@@ -123,43 +124,94 @@ export function splitRank(name) {
 
 // ---------- ช่องรูป ----------
 
+// แถวบน/ล่าง: แบ่ง a = H − g ตาม ratio แล้วบังคับขั้นต่ำ (ล่าง ≥ minSmallH ก่อน แล้วบน ≥ minMainH)
+function rows2(P, H, ratio, errors) {
+  const a = H - P.gap;
+  let up = a * ratio, lo = a - up;
+  if (lo < P.minSmallH) { lo = P.minSmallH; up = a - lo; }
+  if (up < P.minMainH) { up = P.minMainH; lo = a - up; }
+  if (up < P.minMainH || lo < P.minSmallH) {
+    errors.push(`พื้นที่รูป ${a} ไม่พอ (ต้อง ≥ ${P.minMainH + P.minSmallH})`);
+    up = Math.max(0, a * ratio); lo = Math.max(0, a - up);
+  }
+  return [up, lo];
+}
+
+// เลย์เอาต์ทั้งหมด — ช่อง 0 = รูปหลัก (อาคารเรียน) ใหญ่สุดเสมอ, ช่อง 1–3 เรียงซ้าย→ขวา บน→ล่าง
+// กรอบร่วม: x 46..978, บน = main.y + dy, ล่าง = min(landmark − 16, บน + zoneCap) (L1R3/R1L3 ใช้ถึง landmark − 16)
+const GEOM = {
+  '1+3': (P, f, errors) => {
+    let mainH = P.main.h;
+    let smallY = P.small.y + f.dy;
+    let smallH = Math.min(P.small.h, f.limit - smallY);
+    if (smallH < P.minSmallH) {
+      const cut = Math.min(P.minSmallH - smallH, mainH - P.minMainH);
+      if (cut > 0) { mainH -= cut; smallY -= cut; smallH = Math.min(P.small.h, f.limit - smallY); }
+    }
+    if (smallH < P.minSmallH) errors.push(`รูปเล็กสูง ${smallH} < ${P.minSmallH} (landmark.y ${f.landmarkY})`);
+    return [{ x: P.main.x, y: f.top, w: P.main.w, h: mainH },
+      ...P.small.xs.map(x => ({ x, y: smallY, w: P.small.w, h: smallH }))];
+  },
+  // แถวรูปเล็ก 3 ช่องบน + รูปหลักเต็มกว้างล่าง
+  '3+1': (P, f, errors) => {
+    const a = f.H - f.g;
+    const sh = Math.max(P.minSmallH, Math.round(a * P.ratio['3+1']));
+    const mh = a - sh;
+    if (mh < P.minMainH) errors.push(`รูปหลักสูง ${mh} < ${P.minMainH} (landmark.y ${f.landmarkY})`);
+    return [{ x: f.x0, y: f.top + sh + f.g, w: f.W, h: mh },
+      ...P.small.xs.map(x => ({ x, y: f.top, w: P.small.w, h: sh }))];
+  },
+  '2+2': (P, f, errors) => grid2(f, rows2(P, f.H, P.topRatio2plus2, errors)),
+  '2x2': (P, f, errors) => grid2(f, rows2(P, f.H, 0.5, errors)),
+  // ซิกแซก: บน ใหญ่ซ้าย+เล็กขวา / ล่าง เล็กซ้าย+ใหญ่ขวา
+  Z: (P, f, errors) => {
+    const [up, lo] = rows2(P, f.H, P.ratio.Z, errors);
+    const bw = P.bigW, sw = f.W - f.g - bw, y2 = f.top + up + f.g;
+    return [{ x: f.x0, y: f.top, w: bw, h: up }, { x: f.x0 + bw + f.g, y: f.top, w: sw, h: up },
+      { x: f.x0, y: y2, w: sw, h: lo }, { x: f.x0 + sw + f.g, y: y2, w: bw, h: lo }];
+  },
+  // บน: รูปหลัก + เล็กแนวตั้ง (L = หลักซ้าย, R = หลักขวา) / ล่าง: เล็ก 2 ช่องเท่ากัน
+  'mosaic-L': (P, f, errors) => mosaic(P, f, errors, false),
+  'mosaic-R': (P, f, errors) => mosaic(P, f, errors, true),
+  // รูปหลักสูงเต็มโซน + 3 รูปเล็กซ้อนแนวตั้ง — ใช้ได้เฉพาะ landmark ต่ำ (โซน ≥ minSideZone)
+  L1R3: (P, f, errors) => column3(P, f, errors, false),
+  R1L3: (P, f, errors) => column3(P, f, errors, true),
+};
+
+function grid2(f, [up, lo]) {
+  const cw = (f.W - f.g) / 2, y2 = f.top + up + f.g;
+  return [
+    { x: f.x0, y: f.top, w: cw, h: up }, { x: f.x0 + cw + f.g, y: f.top, w: cw, h: up },
+    { x: f.x0, y: y2, w: cw, h: lo }, { x: f.x0 + cw + f.g, y: y2, w: cw, h: lo },
+  ];
+}
+
+function mosaic(P, f, errors, mainRight) {
+  const [up, lo] = rows2(P, f.H, P.ratio.mosaic, errors);
+  const bw = P.bigW, sw = f.W - f.g - bw, cw = (f.W - f.g) / 2, y2 = f.top + up + f.g;
+  const main = { x: mainRight ? f.x0 + sw + f.g : f.x0, y: f.top, w: bw, h: up };
+  const side = { x: mainRight ? f.x0 : f.x0 + bw + f.g, y: f.top, w: sw, h: up };
+  return [main, side, { x: f.x0, y: y2, w: cw, h: lo }, { x: f.x0 + cw + f.g, y: y2, w: cw, h: lo }];
+}
+
+function column3(P, f, errors, mainRight) {
+  const H = f.limit - f.top; // ไม่ใช้ zoneCap — ใช้ความสูงทั้งหมดถึง landmark
+  if (H < P.minSideZone) errors.push(`โซนรูปสูง ${H} < ${P.minSideZone} ใช้ ${mainRight ? 'R1L3' : 'L1R3'} ไม่ได้ (landmark.y ${f.landmarkY})`);
+  const sw = P.sideW, mw = f.W - f.g - sw, sh = Math.max(0, (H - 2 * f.g) / 3);
+  const sx = mainRight ? f.x0 : f.x0 + mw + f.g;
+  return [{ x: mainRight ? f.x0 + sw + f.g : f.x0, y: f.top, w: mw, h: Math.max(0, H) },
+    ...[0, 1, 2].map(i => ({ x: sx, y: f.top + i * (sh + f.g), w: sw, h: sh }))];
+}
+
 function photoGeometry(r, dy = 0) {
   const P = r.photos;
   const limit = r.landmark.y - P.landmarkGap; // ขอบล่างสุดที่รูปลงได้
+  const top = P.main.y + dy;
+  const cap = P.zoneCap ?? (P.small.y + P.small.h - P.main.y);
+  const bottom = Math.min(limit, top + cap);
+  const f = { dy, top, limit, landmarkY: r.landmark.y, x0: P.main.x, W: P.main.w, g: P.gap, H: bottom - top };
   const errors = [];
-  let rects;
-  if (r.photo_layout === '1+3') {
-    let mainH = P.main.h;
-    let smallY = P.small.y + dy;
-    let smallH = Math.min(P.small.h, limit - smallY);
-    if (smallH < P.minSmallH) {
-      const cut = Math.min(P.minSmallH - smallH, mainH - P.minMainH);
-      if (cut > 0) { mainH -= cut; smallY -= cut; smallH = Math.min(P.small.h, limit - smallY); }
-    }
-    if (smallH < P.minSmallH) errors.push(`รูปเล็กสูง ${smallH} < ${P.minSmallH} (landmark.y ${r.landmark.y})`);
-    rects = [{ x: P.main.x, y: P.main.y + dy, w: P.main.w, h: mainH },
-      ...P.small.xs.map(x => ({ x, y: smallY, w: P.small.w, h: smallH }))];
-  } else {
-    // 2x2 / 2+2 ใช้กรอบเดียวกับ 1+3: x 46..978, บน = main.y, ล่าง = min(landmark−16, ขอบล่างรูปเล็กเดิม)
-    const x0 = P.main.x, W = P.main.w, g = P.gap;
-    const top = P.main.y + dy;
-    const bottom = Math.min(limit, P.small.y + P.small.h + dy);
-    const avail = bottom - top - g;
-    const ratio = r.photo_layout === '2+2' ? P.topRatio2plus2 : 0.5;
-    let upper = avail * ratio, lower = avail - upper;
-    if (lower < P.minSmallH) { lower = P.minSmallH; upper = avail - lower; }
-    if (upper < P.minMainH) { upper = P.minMainH; lower = avail - upper; }
-    if (upper < P.minMainH || lower < P.minSmallH) {
-      errors.push(`พื้นที่รูป ${avail} ไม่พอ (ต้อง ≥ ${P.minMainH + P.minSmallH})`);
-      upper = Math.max(0, avail * ratio); lower = Math.max(0, avail - upper);
-    }
-    const cw = (W - g) / 2;
-    const y2 = top + upper + g;
-    rects = [
-      { x: x0, y: top, w: cw, h: upper }, { x: x0 + cw + g, y: top, w: cw, h: upper },
-      { x: x0, y: y2, w: cw, h: lower }, { x: x0 + cw + g, y: y2, w: cw, h: lower },
-    ];
-  }
+  const rects = (GEOM[r.photo_layout] || GEOM['1+3'])(P, f, errors);
   return { rects, errors };
 }
 
@@ -321,7 +373,7 @@ export function computeLayout(resolved, model, measure) {
 
   const { rects: photos, errors: warnings } = photoGeometry(r, dy);
   const items = model.photos || [];
-  const labels = photos.map((p, i) => labelFor(measure, r.label, p, items[i], r.photo_layout === '1+3' && i === 0));
+  const labels = photos.map((p, i) => labelFor(measure, r.label, p, items[i], i === 0 && p.w >= MAIN_LABEL_MIN_W));
 
   return {
     logo: logoRect(r.logo, model.logoSize),
@@ -338,6 +390,7 @@ export function computeLayout(resolved, model, measure) {
 
 // ---------- ตรวจแม่แบบ ----------
 
+const overlaps = (a, b) => a.x < b.x + b.w - 1e-6 && b.x < a.x + a.w - 1e-6 && a.y < b.y + b.h - 1e-6 && b.y < a.y + a.h - 1e-6;
 const inCanvas = q => q.x >= 0 && q.y >= 0 && q.x + q.w <= DESIGN_W + 1e-6 && q.y + q.h <= DESIGN_H + 1e-6;
 
 export function validateTemplate(r) {
@@ -358,10 +411,17 @@ export function validateTemplate(r) {
     for (const dy of [0, maxDy]) {
       const g = photoGeometry(r, dy);
       errors.push(...g.errors.map(e => `dy ${dy}: ${e}`));
+      const P = r.photos, minW = P.minSmallW ?? 0, area = q => q.w * q.h;
+      if (g.rects.length !== 4) errors.push(`dy ${dy}: ช่องรูปต้องมี 4 ช่อง (ได้ ${g.rects.length})`);
       g.rects.forEach((q, i) => {
         if (dy === 0) rects[`photo${i}`] = q;
-        if (q.y + q.h + r.photos.landmarkGap > r.landmark.y + 1e-6) errors.push(`dy ${dy}: รูป ${i} ทับจุดเด่น (ล่าง ${q.y + q.h})`);
+        if (q.y + q.h + P.landmarkGap > r.landmark.y + 1e-6) errors.push(`dy ${dy}: รูป ${i} ทับจุดเด่น (ล่าง ${q.y + q.h})`);
         if (dy !== 0 && !inCanvas(q)) errors.push(`dy ${dy}: photo${i} อยู่นอกภาพ 1024×1536`);
+        const minH = i === 0 ? P.minMainH : P.minSmallH;
+        if (q.h < minH - 1e-6) errors.push(`dy ${dy}: รูป ${i} สูง ${q.h} < ${minH}`);
+        if (q.w < minW - 1e-6) errors.push(`dy ${dy}: รูป ${i} กว้าง ${q.w} < ${minW}`);
+        if (i > 0 && area(q) > area(g.rects[0]) + 1e-6) errors.push(`dy ${dy}: รูป ${i} ใหญ่กว่ารูปหลัก`);
+        for (let j = 0; j < i; j++) if (overlaps(q, g.rects[j])) errors.push(`dy ${dy}: รูป ${j} กับรูป ${i} ทับกัน`);
       });
     }
   }

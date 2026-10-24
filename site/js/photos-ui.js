@@ -14,9 +14,12 @@ const MSG_DECODE = 'รูปนี้เปิดไม่ได้ ลอง�
 export function createPhotos(ctx) {
   const { app, state, $, log, esc, showMsg } = ctx;
   const thumbUrls = [null, null, null, null];
+  const failed = new Set(); // ช่องที่รูปล่าสุดเปิดไม่ได้ → กรอบเตือนในช่อง จนกว่าจะเลือกรูปใหม่สำเร็จ/เอาออก
 
   const layout = () => ctx.template()?.photo_layout || '1+3';
-  const hintFor = (lay, i) => (lay === '1+3' ? (i === 0 ? 'ภาพใหญ่ (บนสุด)' : 'ภาพเล็ก') : `ภาพที่ ${i + 1}`);
+  // 2x2/2+2 ทุกช่องกว้างเท่ากัน → เรียกตามลำดับ; แบบอื่นช่อง 0 = ภาพใหญ่ (ตำแหน่งต่างกันตามแม่แบบ)
+  const grid2 = (lay) => lay === '2x2' || lay === '2+2';
+  const hintFor = (lay, i) => (grid2(lay) ? `ภาพที่ ${i + 1}` : i === 0 ? (lay === '1+3' ? 'ภาพใหญ่ (บนสุด)' : 'ภาพใหญ่') : 'ภาพเล็ก');
 
   function slotTemplate() {
     return ctx.template()
@@ -39,7 +42,8 @@ export function createPhotos(ctx) {
   function slotEl(r, i, lay, box) {
     const p = state.photos[i];
     const slot = document.createElement('div');
-    slot.className = 'slot' + (p ? ' filled' : '');
+    const bad = failed.has(i);
+    slot.className = 'slot' + (p ? ' filled' : '') + (bad ? ' error' : '');
     slot.dataset.index = i;
     Object.assign(slot.style, {
       left: `${((r.x - box.minX) / box.W) * 100}%`, top: `${((r.y - box.minY) / box.H) * 100}%`,
@@ -53,29 +57,41 @@ export function createPhotos(ctx) {
         + (i === 0 ? '<span class="x">✕ เปลี่ยน</span>' : '')
         + `<button type="button" class="lbl${p.label ? '' : ' add'}" data-label="${i}"><span class="lbl-text">${p.label ? esc(p.label) : '+ ป้ายชื่อ'}</span></button>${input}`;
     } else {
-      slot.innerHTML = `<span class="slot-empty">${CAMERA}<b>เพิ่มรูป</b><small>${hint}</small></span>${input}`;
+      slot.innerHTML = bad
+        ? `<span class="slot-empty" role="alert">${CAMERA}<b>เปิดไม่ได้</b><small>แตะเลือกใหม่</small></span>${input}`
+        : `<span class="slot-empty">${CAMERA}<b>เพิ่มรูป</b><small>${hint}</small></span>${input}`;
     }
     return slot;
   }
 
+  // ช่องปลายทาง: ช่องที่แตะก่อน แล้วรูปที่เกินลงช่องว่างที่เหลือตามลำดับ — ไม่ทับรูปที่เลือกไว้แล้วในช่องอื่น
+  function targetsFor(startIndex, n) {
+    const rest = [0, 1, 2, 3].filter((j) => j !== startIndex && !state.photos[j]);
+    return [startIndex, ...rest].slice(0, n);
+  }
+
   async function onFilesChosen(startIndex, files) {
-    const list = [...files].slice(0, 4 - startIndex);
-    showMsg('photoMsg', null);
+    const targets = targetsFor(startIndex, files.length);
+    const list = [...files].slice(0, targets.length);
+    const over = files.length > targets.length ? `ใส่ได้อีก ${targets.length} รูป (ช่องอื่นมีรูปแล้ว) — รูปที่เกินไม่ได้ใช้` : null;
+    showMsg('photoMsg', over);
     for (let k = 0; k < list.length; k++) {
-      const i = startIndex + k;
+      const i = targets[k];
       // ช่องที่ยังรอทำ (รวมช่องนี้) ขึ้น "กำลังเตรียมรูป…" — render() รอบก่อนสร้างช่องใหม่ จึงต้องใส่ซ้ำทุกรอบ
-      for (let j = i; j < startIndex + list.length; j++) {
+      for (const j of targets.slice(k)) {
         $('photoGrid').querySelector(`.slot[data-index="${j}"]`)?.classList.add('loading');
       }
       if (list[k].size > 25 * 1024 * 1024) showMsg('photoMsg', 'ไฟล์ใหญ่กว่า 25 MB กำลังลองย่อ…');
       try {
         const r = await processPhoto(list[k]);
+        // ป้ายชื่อคงไว้เฉพาะช่องที่ครูแตะเปลี่ยนเอง (ช่องอื่นเป็นช่องว่างอยู่แล้ว)
         setPhoto(i, { ...r, label: state.photos[i]?.label || '', icon: state.photos[i]?.icon || null });
-        showMsg('photoMsg', null);
+        failed.delete(i);
       } catch (e) {
         log('photo error', e.name, e.message);
-        showMsg('photoMsg', MSG_DECODE);
+        failed.add(i);
       }
+      showMsg('photoMsg', failed.size ? `${MSG_DECODE} (ช่องที่ ${[...failed].sort().map((j) => j + 1).join(', ')})` : over);
       // แสดงทีละรูปทันทีที่เสร็จ (HEIC ใช้เวลารูปละ ~2–3 วิ ห้ามรอครบทุกรูปแล้วค่อยแสดง)
       render();
       ctx.onChange();
@@ -96,7 +112,7 @@ export function createPhotos(ctx) {
     ctx.preview.swap(0, i);
   }
 
-  function clear() { for (let i = 0; i < 4; i++) setPhoto(i, null); }
+  function clear() { failed.clear(); for (let i = 0; i < 4; i++) setPhoto(i, null); }
 
   // เมนูช่องรูป (แผ่นจากล่าง) — "เปลี่ยนรูป" ต้องกด input ในการแตะเดียวกัน (file picker ต้องมี user activation)
   function openSlotSheet(i) {
@@ -104,7 +120,7 @@ export function createPhotos(ctx) {
       id: 'slotSheet', title: hintFor(layout(), i),
       items: [
         { act: 'replace', text: 'เปลี่ยนรูป' },
-        { act: 'swap', text: '⇄ สลับเป็นภาพใหญ่', hidden: !(layout() === '1+3' && i > 0) },
+        { act: 'swap', text: '⇄ สลับเป็นภาพใหญ่', hidden: !(!grid2(layout()) && i > 0) },
         { act: 'label', text: 'ป้ายชื่อรูป' },
         { act: 'remove', text: '✕ เอารูปออก', danger: true },
       ],
@@ -119,6 +135,7 @@ export function createPhotos(ctx) {
     else if (act === 'remove') {
       const ok = await confirmDanger({ title: 'เอารูปนี้ออก?', text: `${hintFor(layout(), i)} จะว่าง ต้องเลือกรูปใหม่`, confirmText: 'เอารูปออก' });
       if (!ok || !state.photos[i]) return;
+      failed.delete(i);
       setPhoto(i, null);
     } else return;
     render();

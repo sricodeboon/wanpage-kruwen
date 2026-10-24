@@ -1,8 +1,8 @@
 // หน้าครูเวร — ผูกโมดูลทั้งหมดเข้าด้วยกัน (spec 7)
 // state machine: boot → data → form → rendering → confirm → sharing → done
-import { todayBangkok, formatThaiDate, thaiWeekday, stampHHmm, addDaysISO } from './js/thaidate.js';
+import { todayBangkok, formatThaiDate, formatThaiDateShort, thaiWeekday, stampHHmm, addDaysISO } from './js/thaidate.js';
 import { loadData, refreshData } from './js/data.js';
-import { filterTemplates, splitRank } from './js/layout.js';
+import { filterTemplates, splitRank, photoRects } from './js/layout.js';
 import { createCanvas, canvasToBlob, renderOnePage } from './js/render.js';
 import { ensureFonts } from './js/fonts.js';
 import { isLineInApp, saveMode, externalBrowserUrl, canShareFile, sharePng, downloadFile, buildShareText } from './js/share.js';
@@ -16,7 +16,7 @@ import { createDrive } from './js/drive-ui.js';
 import { createPhotos } from './js/photos-ui.js';
 import { loadJsonCached, validConfig, validTemplates } from './js/remote-json.js';
 import { createImageLoader, logoSrc, loadFinalAssets, loadPreviewAssets, AssetError } from './js/assets.js';
-import { panel, busyShow, busyHide, toast, info, closeAll } from './js/ui.js';
+import { panel, sheet, busyShow, busyHide, toast, info, closeAll } from './js/ui.js';
 
 const $ = (id) => document.getElementById(id);
 const PROVINCE_TH = { np: 'นครพนม', sn: 'สกลนคร', mdh: 'มุกดาหาร' };
@@ -278,6 +278,20 @@ function refreshToday() {
   preview.schedule();
 }
 
+// แผ่นเลือกวัน: วันนี้ + ย้อนหลัง MAX_BACK_DAYS วัน แสดงชื่อวัน + พ.ศ. (ปฏิทินเครื่องแสดง ค.ศ. ทำให้ครูสับสน)
+function openDateSheet() {
+  const rel = ['วันนี้', 'เมื่อวาน'];
+  const items = Array.from({ length: MAX_BACK_DAYS + 1 }, (_, k) => {
+    const iso = addDaysISO(app.today, -k);
+    const cur = iso === state.dateISO ? ' ✓' : '';
+    return { act: iso, text: `${thaiWeekday(iso)} ${formatThaiDateShort(iso)}${rel[k] ? ` (${rel[k]})` : ''}${cur}` };
+  });
+  sheet({
+    id: 'dateSheet', title: 'เลือกวันที่เข้าเวร', items,
+    onPick: (iso) => { $('dateInput').value = iso; onDateChange(); },
+  });
+}
+
 function onDateChange() {
   const v = $('dateInput').value;
   const g = dateGuard(v, app.today);
@@ -309,6 +323,10 @@ function renderTeachers() {
       + `<span><span class="t-name">${esc(t.display_name)}</span>${t.phone ? `<span class="t-phone">${esc(t.phone)}</span>` : ''}</span>`;
     box.appendChild(b);
   }
+  const n = state.selectedTeacherIds.length;
+  $('teacherCount').hidden = n === 0;
+  $('teacherCount').textContent = `เลือกแล้ว ${n}/${MAX_TEACHERS} คน`;
+  $('nextPhotos').hidden = n === 0;
   renderReuseChip();
 }
 
@@ -340,12 +358,31 @@ function renderBackgrounds() {
   const s = school();
   const list = app.templates;
   $('hBg').textContent = s ? `พื้นหลัง (${PROVINCE_TH[s.province] || s.province} ${list.length} แบบ)` : 'พื้นหลัง';
-  $('bgList').innerHTML = list.map((t, k) => `<button type="button" class="bg" role="radio" data-bg="${esc(t.id)}" aria-checked="${t.id === state.bgId}" aria-label="${esc(t.name || t.id)}">`
-    + `<img src="${esc(t.thumb)}" alt="" loading="lazy" width="80" height="120">${k + 1}</button>`).join('');
+  $('bgList').innerHTML = list.map((t, k) => `<button type="button" class="bg" role="radio" data-bg="${esc(t.id)}" aria-checked="${t.id === state.bgId}" aria-label="${k + 1}. ${esc(t.name || t.id)}">`
+    + `<span class="bg-thumb"><img src="${esc(t.thumb)}" alt="" loading="lazy" width="96" height="144">${layoutIcon(t)}</span>`
+    + `<span class="bg-name">${k + 1}. ${esc(t.name || t.id)}</span></button>`).join('');
+  renderBgPicked();
   const failed = Boolean(s) && !app.templatesAll;
   showMsg('bgMsg', failed ? MSG.templatesFail : s && !list.length ? MSG.noTemplates : null);
   $('retryTemplates').hidden = !failed;
   if (template()) loadImage(template().file).catch(() => {});
+}
+
+// ไอคอนผังรูปเล็ก ๆ มุมภาพย่อ — ให้ครูเห็นก่อนเลือกว่ารูป 4 ภาพจะวางแบบไหน (ช่องหลักสีเข้ม)
+function layoutIcon(t) {
+  let rects;
+  try { rects = photoRects(t, 0); } catch { return ''; }
+  const x0 = Math.min(...rects.map((r) => r.x)), y0 = Math.min(...rects.map((r) => r.y));
+  const W = Math.max(...rects.map((r) => r.x + r.w)) - x0, H = Math.max(...rects.map((r) => r.y + r.h)) - y0;
+  const k = 30 / W;
+  const cells = rects.map((r, i) => `<rect x="${((r.x - x0) * k).toFixed(1)}" y="${((r.y - y0) * k).toFixed(1)}" width="${Math.max(1, r.w * k - 1).toFixed(1)}" height="${Math.max(1, r.h * k - 1).toFixed(1)}" rx="1.5"${i === 0 ? ' class="m"' : ''}/>`).join('');
+  return `<svg class="bg-lay" viewBox="-2 -2 ${34} ${(H * k + 4).toFixed(1)}" aria-hidden="true">${cells}</svg>`;
+}
+
+function renderBgPicked() {
+  const t = template();
+  $('bgPicked').hidden = !t;
+  $('bgPicked').textContent = t ? `เลือกอยู่: ${t.name || t.id}` : '';
 }
 
 function onBgTap(id) {
@@ -354,6 +391,7 @@ function onBgTap(id) {
   const k = app.templates.findIndex((t) => t.id === id);
   for (const t of [app.templates[k - 1], app.templates[k], app.templates[k + 1]]) if (t) loadImage(t.file).catch(() => {});
   for (const b of $('bgList').children) b.setAttribute('aria-checked', String(b.dataset.bg === id));
+  renderBgPicked();
   photos.render(); // เลย์เอาต์ช่องรูปขึ้นกับแม่แบบ
   preview.schedule();
 }
@@ -463,9 +501,10 @@ function confirmHtml(file, canShare) {
     + `<p class="mb-2">เปิดลิงก์ใน Chrome จะส่งเข้า LINE ได้ในแตะเดียว</p>`
     + `<a id="chromeLink" class="btn btn-outline-primary w-100 tap" href="#">เปิดใน Chrome</a></div>`
     + `<button id="shareBtn" type="button" class="btn btn-line btn-lg w-100 tap-lg"${canShare ? '' : ' hidden'}>ส่งเข้า LINE</button>`
-    + `<button id="saveBtn" type="button" class="btn ${canShare ? 'btn-outline-primary' : 'btn-primary btn-cta'} btn-lg w-100 ${canShare ? 'tap' : 'tap-lg'}">บันทึกรูปลงเครื่อง</button>`
-    + `<p id="confirmMsg" class="alert alert-gold conf-msg mb-0" aria-live="polite" hidden></p>`
-    + `<button id="editBtn" type="button" class="btn btn-link linkbtn edit2">แก้ไข</button></div>`;
+    + `<div class="conf-row">`
+    + `<button id="editBtn" type="button" class="btn btn-outline-secondary btn-lg tap edit2">‹ แก้ไข</button>`
+    + `<button id="saveBtn" type="button" class="btn ${canShare ? 'btn-outline-primary' : 'btn-primary btn-cta'} btn-lg ${canShare ? 'tap' : 'tap-lg'}">บันทึกรูปลงเครื่อง</button></div>`
+    + `<p id="confirmMsg" class="alert alert-gold conf-msg mb-0" aria-live="polite" hidden></p></div>`;
 }
 
 function openConfirm(file) {
@@ -504,8 +543,8 @@ async function onShare() {
   const text = buildShareText(st.share_text_template || 'วันเพจ {short_name} {date_th}', { short_name: s.short_name, date_th: formatThaiDate(state.dateISO) });
   const r = await sharePng(app.lastFile.file, { title: st.share_title || 'วันเพจครูเวร', text });
   log('share', r);
-  drive.kick(); // หลัง share settle เท่านั้น
-  if (r === 'shared') showDone();
+  // เก็บเข้า Drive เฉพาะเมื่อแชร์สำเร็จ (ยกเลิก = ยังแก้ไขได้ ไม่ส่ง; ล้มเหลว → onSave() เป็นคนส่ง)
+  if (r === 'shared') { drive.kick(); showDone(); }
   else if (r === 'aborted') setPhase('confirm', 'aborted');
   else { setPhase('confirm', 'share failed'); onSave(); }
 }
@@ -547,6 +586,7 @@ function showDone() {
   markSent();
   closeAll();
   $('doneTitle').textContent = `ส่งวันเพจวันที่ ${formatThaiDate(state.dateISO).replace('พ.ศ. ', '')} แล้ว`;
+  if (drive.on()) drive.renderDone();
   $('doneDrive').hidden = !drive.on();
   $('doneNote').hidden = !drive.on();
   $('formView').hidden = true;
@@ -557,6 +597,7 @@ function showDone() {
 
 function again() {
   photos.clear();
+  $('doneDrive').innerHTML = '';
   $('doneView').hidden = true;
   $('formView').hidden = false;
   setPhase('form', 'again');
@@ -569,7 +610,10 @@ function again() {
 function bindForm() {
   $('changeSchool').onclick = () => { $('schoolPick').hidden = false; $('schoolSelect').focus(); };
   $('schoolSelect').onchange = (e) => { if (e.target.value) setSchool(e.target.value); };
-  $('editDate').onclick = () => { const i = $('dateInput'); i.hidden = false; i.focus(); i.showPicker?.(); };
+  $('editDate').onclick = openDateSheet;
+  $('nextPhotos').onclick = () => $('secPhotos').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // ป้ายเหตุผลใต้ปุ่มรายงาน แตะแล้วพาไปส่วนที่ยังขาด
+  $('ctaMsg').onclick = () => { const v = state.schoolId && currentValidity(); if (v && !v.ok && v.target) $(SECTION[v.target]).scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   $('dateInput').onchange = onDateChange;
   $('teacherList').onclick = (e) => { const b = e.target.closest('.t'); if (b) onTeacherTap(b.dataset.id); };
   $('reuseChip').onclick = () => {
@@ -603,6 +647,15 @@ function bindForm() {
     }
   };
   $('driveBar').onclick = drive.retryTap;
+  // ช่องว่างท้ายหน้า = ความสูงจริงของแถบปุ่มรายงาน (ไม่ให้แถบบังช่องรูป/รายชื่อแถวท้าย)
+  const wrap = document.querySelector('.cta-wrap');
+  if (wrap && typeof ResizeObserver === 'function') {
+    new ResizeObserver(() => {
+      const h = Math.ceil(wrap.getBoundingClientRect().height);
+      document.querySelector('.cta-space').style.height = `${h + 8}px`;
+      document.documentElement.style.setProperty('--cta-h', `${h}px`);
+    }).observe(wrap);
+  }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshToday(); });
   window.addEventListener('pageshow', refreshToday);
 }

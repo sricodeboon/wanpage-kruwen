@@ -136,6 +136,20 @@ describe('drainQueue', () => {
     await drainQueue(deps((u, o) => { ids.push(JSON.parse(o.body).report_id); return resp({ ok: true }); }));
     expect(ids).toEqual(['old', 'new']);
   });
+  it('isHeld: รายการที่ยังไม่ยืนยันไม่ถูกส่ง (แม้ appOpen) จนกว่าจะปล่อย', async () => {
+    await enqueue(queue, mkReport('held'));
+    await enqueue(queue, mkReport('free', { created: NOW + 1 }));
+    let hold = 'held';
+    const fetchFn = vi.fn(() => resp({ ok: true }));
+    const d = deps(fetchFn, { isHeld: (id) => id === hold });
+    await drainQueue({ ...d, appOpen: true });
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect((await queue.all()).map((i) => i.report_id)).toEqual(['held']);
+    hold = null;
+    await drainQueue(d);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(await queue.all()).toEqual([]);
+  });
   it('disabled: no fetch, status disabled', async () => {
     await enqueue(queue, mkReport('r1'));
     for (const v of ['FALSE', 'false', '0', false]) {

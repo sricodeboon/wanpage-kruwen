@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { loadGs } from '../helpers/load-gs.mjs';
+import { reportFileName } from '../../site/js/form.js';
 
 let g;
 beforeAll(() => { g = loadGs('apps-script/Validate.gs'); });
@@ -115,5 +117,18 @@ describe('rateKeys', () => {
     expect(g.rateKeys('changkon8', '2026-10-23', '202610230742')).toEqual([
       'rl:school:changkon8:2026-10-23', 'rl:all:2026-10-23', 'rl:min:202610230742',
     ]);
+  });
+});
+
+describe('ชื่อไฟล์จริงของทุกโรงเรียนใน snapshot', () => {
+  const snap = JSON.parse(readFileSync(new URL('../../site/data/snapshot.json', import.meta.url), 'utf8'));
+  const ids = snap.schools.map((s) => s.school_id);
+  it.each(snap.schools.map((s) => [s.school_id, s.short_name]))('%s (%s) ผ่าน validatePayload', (id, short) => {
+    const p = { ...good(), school_id: id, file_name: reportFileName(short, TODAY, '0742') };
+    expect(g.validatePayload(p, props, TODAY, ids)).toEqual({ ok: true });
+  });
+  it('ชื่อย่อ 24 ตัวผ่าน, 25 ตัวไม่ผ่าน (ฝั่งเซิร์ฟเวอร์)', () => {
+    expect(run({ ...good(), file_name: `วันเพจ_${'ก'.repeat(24)}_2026-10-23_0742.png` }).ok).toBe(true);
+    expect(run({ ...good(), file_name: `วันเพจ_${'ก'.repeat(25)}_2026-10-23_0742.png` }).error).toBe('INVALID');
   });
 });

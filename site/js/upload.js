@@ -203,7 +203,7 @@ async function scheduleWake(opts) {
   let items = [];
   try { items = await opts.queue.all(); } catch { return; }
   const now = getNow(opts.now);
-  const times = items.map((i) => i.next_try).filter((t) => Number.isFinite(t) && t > now);
+  const times = items.filter((i) => !opts.isHeld?.(i.report_id)).map((i) => i.next_try).filter((t) => Number.isFinite(t) && t > now);
   if (!times.length) return;
   const delay = Math.min(Math.min(...times) - now, 2147483647); // setTimeout รับได้ไม่เกิน 2^31-1
   wakeTimer = setTimeout(() => {
@@ -246,6 +246,8 @@ async function doDrain(opts) {
       onStatus('gave_up', item);
       return;
     }
+    // ยังไม่ยืนยัน (ครูยังไม่ส่ง LINE/บันทึก) = พักไว้ในคิว ไม่ส่ง — "แก้ไข" ลบทิ้งได้โดยไม่เกิดไฟล์ซ้ำใน Drive
+    if (opts.isHeld?.(item.report_id)) return;
     // Infinity = รอเปิดแอปครั้งถัดไป — เฉพาะรอบ appOpen เท่านั้นที่ลองใหม่
     if (item.next_try === Infinity ? !appOpen : item.next_try > now) return;
 

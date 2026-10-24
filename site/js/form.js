@@ -52,8 +52,20 @@ export function dateGuard(iso, todayISO) {
   return { ok: true, warn: back === 0 ? null : MSG.notToday };
 }
 
+// ชื่อย่อในชื่อไฟล์: ตัดอักขระต้องห้าม (/ \ : * ? " < > | _) และยาวไม่เกิน 12 ตัว ให้ผ่าน uploader ทุกรุ่น (Validate.gs)
+// ตัดไม่ให้ทิ้งสระบน/ล่าง/วรรณยุกต์ไว้หลังจุดตัด (ถอยไปตัดก่อนพยัญชนะตัวนั้น)
+export const FILE_SHORT_MAX = 12;
+const isMark = (ch) => { const c = ch.codePointAt(0); return c === 0x0e31 || (c >= 0x0e34 && c <= 0x0e3a) || (c >= 0x0e47 && c <= 0x0e4e); };
+export function fileShortName(shortName) {
+  const t = String(shortName ?? '').replace(/[\/\\:*?"<>|_]+/g, '').trim();
+  if (t.length <= FILE_SHORT_MAX) return t || 'รร';
+  let n = FILE_SHORT_MAX;
+  while (n > 1 && isMark(t[n])) n--;
+  return t.slice(0, n);
+}
+
 export function reportFileName(shortName, dateISO, hhmm) {
-  return `วันเพจ_${shortName}_${dateISO}_${hhmm}.png`;
+  return `วันเพจ_${fileShortName(shortName)}_${dateISO}_${hhmm}.png`;
 }
 
 // RenderModel สำหรับ renderOnePage — ลำดับครู = ลำดับที่ติ๊ก

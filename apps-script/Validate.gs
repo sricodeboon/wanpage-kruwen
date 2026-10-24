@@ -3,7 +3,7 @@
 
 var VALIDATE_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 var VALIDATE_SCHOOL_RE = /^[a-z0-9_]{2,24}$/;
-var VALIDATE_FILE_RE = /^วันเพจ_[^/\\:*?"<>|]{1,12}_\d{4}-\d{2}-\d{2}_\d{4}\.(png|jpg)$/;
+var VALIDATE_FILE_RE = /^วันเพจ_[^/\\:*?"<>|]{1,24}_\d{4}-\d{2}-\d{2}_\d{4}\.(png|jpg)$/;
 var VALIDATE_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 var EXPECTED_PNG_W = 1536;
 var EXPECTED_PNG_H = 2304;

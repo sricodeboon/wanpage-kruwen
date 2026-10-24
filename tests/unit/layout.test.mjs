@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, it, expect } from 'vitest';
 import { measure } from '../helpers/measure.mjs';
 import {
-  mergeTemplate, fitText, photoRects, computeLayout, validateTemplate, filterTemplates, splitRank, wordBoundaries,
+  mergeTemplate, fitText, photoRects, computeLayout, validateTemplate, filterTemplates, splitRank, wordBoundaries, LAYOUTS,
 } from '../../site/js/layout.js';
 
 const ALL = JSON.parse(readFileSync(new URL('../../site/templates.json', import.meta.url), 'utf8'));
@@ -294,5 +294,101 @@ describe('filterTemplates', () => {
     expect(filterTemplates(ALL, 'np').map(t => t.id)).toContain('np-01');
     const hidden = { ...ALL, templates: [{ ...NP01, active: false }] };
     expect(filterTemplates(hidden, 'np')).toEqual([]);
+  });
+});
+
+describe('เลย์เอาต์รูปหลากหลาย (3+1 / Z / mosaic / L1R3)', () => {
+  const NEW = ['3+1', 'Z', 'mosaic-L', 'mosaic-R', 'L1R3', 'R1L3'];
+  const area = q => q.w * q.h;
+  const byId = id => ALL.templates.find(t => t.id === id);
+  const lowLandmark = { x: 403, y: 980, w: 220, h: 400 }; // แบบ np-07 (L1R3/R1L3 ต้องการโซน ≥ 551)
+  const tplFor = lay => (lay === 'L1R3' || lay === 'R1L3' ? { photo_layout: lay, landmark: lowLandmark } : { photo_layout: lay });
+  const check = (r, dy) => {
+    const P = r.photos, q = photoRects(r, dy);
+    expect(q.length).toBe(4);
+    q.forEach((a, i) => {
+      expect(a.x).toBeGreaterThanOrEqual(46);
+      expect(a.x + a.w).toBeLessThanOrEqual(978.0001);
+      expect(a.y).toBeGreaterThanOrEqual(352 + dy);
+      expect(a.y + a.h).toBeLessThanOrEqual(r.landmark.y - 16 + 1e-6);
+      expect(a.h).toBeGreaterThanOrEqual(i === 0 ? P.minMainH : P.minSmallH);
+      if (i > 0) { expect(a.w).toBeGreaterThanOrEqual(P.minSmallW); expect(area(a)).toBeLessThanOrEqual(area(q[0]) + 1e-6); }
+      for (let j = i + 1; j < 4; j++) expect(overlaps(a, q[j])).toBe(false);
+    });
+    return q;
+  };
+  it('LAYOUTS มีครบ 9 แบบ', () => expect(LAYOUTS).toEqual(['1+3', '3+1', '2+2', '2x2', 'Z', 'mosaic-L', 'mosaic-R', 'L1R3', 'R1L3']));
+  it.each(NEW)('%s → 4 ช่อง ไม่ทับกัน อยู่เหนือ landmark ขนาดขั้นต่ำ รูปหลักใหญ่สุด (dy 0 และ 54)', (lay) => {
+    const r = resolved({}, tplFor(lay));
+    check(r, 0); check(r, 54);
+    expect(validateTemplate(r)).toEqual({ ok: true, errors: [] });
+  });
+  it('3+1: รูปเล็ก 3 ช่องบน รูปหลักเต็มกว้างล่าง', () => {
+    const q = photoRects(resolved({}, { photo_layout: '3+1' }));
+    expect(q[0]).toMatchObject({ x: 46, w: 932 });
+    expect(q.slice(1).every(a => a.y === 352 && a.y + a.h < q[0].y)).toBe(true);
+  });
+  it('Z: รูปหลักซ้ายบน ช่องใหญ่ล่างอยู่ขวา', () => {
+    const q = photoRects(resolved({}, { photo_layout: 'Z' }));
+    expect(q[0]).toMatchObject({ x: 46, y: 352, w: 611 });
+    expect(q[3].x + q[3].w).toBeCloseTo(978);
+    expect(q[3].w).toBe(611);
+  });
+  it('mosaic-L หลักซ้าย / mosaic-R หลักขวา', () => {
+    const l = photoRects(resolved({}, { photo_layout: 'mosaic-L' })), rr = photoRects(resolved({}, { photo_layout: 'mosaic-R' }));
+    expect(l[0].x).toBe(46);
+    expect(rr[0].x + rr[0].w).toBeCloseTo(978);
+    expect(rr[1].x).toBe(46);
+  });
+  it('L1R3/R1L3 ใช้ความสูงเต็มถึง landmark−16 และรูปเล็ก 3 ช่องซ้อนแนวตั้ง', () => {
+    const q = photoRects(resolved({}, tplFor('L1R3')));
+    expect(q[0]).toEqual({ x: 46, y: 352, w: 611.5, h: 612 });
+    expect(q.slice(1).every(a => a.x === 678 && a.w === 300)).toBe(true);
+    expect(q[3].y + q[3].h).toBeCloseTo(964);
+    const m = photoRects(resolved({}, tplFor('R1L3')));
+    expect(m[0].x + m[0].w).toBeCloseTo(978);
+    expect(m.slice(1).every(a => a.x === 46)).toBe(true);
+  });
+  it.each(['L1R3', 'R1L3'])('%s บน landmark สูง (np-01 890) ไม่ผ่าน validateTemplate', (lay) => {
+    const v = validateTemplate(resolved({}, { photo_layout: lay }));
+    expect(v.ok).toBe(false);
+    expect(v.errors.some(e => e.includes('551'))).toBe(true);
+  });
+  it.each(NEW.filter(l => !l.endsWith('3')))('%s landmark สูงเกิน → ไม่ผ่าน', (lay) => {
+    expect(validateTemplate(resolved({}, { photo_layout: lay, landmark: { x: 300, y: 700, w: 460, h: 600 } })).ok).toBe(false);
+  });
+  it('validateTemplate จับรูปทับกันได้', () => {
+    const v = validateTemplate(resolved({ photos: { small: { xs: [46, 200, 681] } } }));
+    expect(v.errors.some(e => e.includes('ทับกัน'))).toBe(true);
+  });
+  it('ป้ายใหญ่ = ช่อง 0 ทุกเลย์เอาต์ที่รูปหลักกว้าง ≥ 600; 2x2/2+2 ใช้ป้ายปกติ', () => {
+    for (const lay of LAYOUTS) {
+      const L = computeLayout(resolved({}, tplFor(lay)), model(), measure);
+      expect(L.labels[0].rect.h).toBe(L.photos[0].w >= 600 ? 46 : 42);
+      expect(L.labels[1].rect.h).toBe(42);
+      if (lay === '2x2' || lay === '2+2') expect(L.labels[0].rect.h).toBe(42);
+    }
+  });
+  it('แม่แบบจริงทั้ง 30 แบบผ่าน validateTemplate และใช้ครบทุกเลย์เอาต์', () => {
+    const used = new Set();
+    for (const t of ALL.templates) {
+      expect(validateTemplate(mergeTemplate(ALL.common, t)).errors).toEqual([]);
+      used.add(t.photo_layout);
+    }
+    expect([...used].sort()).toEqual([...LAYOUTS].sort());
+  });
+  it('แม่แบบติดกันในจังหวัดเดียวกันใช้เลย์เอาต์ไม่ซ้ำกัน', () => {
+    for (const p of ['np', 'sn', 'mdh']) {
+      const list = ALL.templates.filter(t => t.province === p);
+      expect(list.length).toBeGreaterThan(1);
+      for (let i = 1; i < list.length; i++) expect(list[i].photo_layout, `${list[i - 1].id} → ${list[i].id}`).not.toBe(list[i - 1].photo_layout);
+    }
+  });
+  it('รูปหลักไม่อยู่ฝั่งเดียวกับ landmark ที่ชิดข้าง (mosaic)', () => {
+    for (const id of ['np-03', 'np-09', 'sn-05', 'sn-07', 'mdh-04', 'mdh-10']) {
+      const t = byId(id), q = photoRects(mergeTemplate(ALL.common, t));
+      const lmMid = t.landmark.x + t.landmark.w / 2, mainMid = q[0].x + q[0].w / 2;
+      expect(Math.sign(lmMid - 512), id).not.toBe(Math.sign(mainMid - 512));
+    }
   });
 });

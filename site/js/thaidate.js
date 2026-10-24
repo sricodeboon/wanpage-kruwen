@@ -32,6 +32,14 @@ export function formatThaiDate(iso) {
   return `${d} ${MONTHS[m - 1]} พ.ศ. ${y + 543}`;
 }
 
+const MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+// "23 ต.ค. 2569" (พ.ศ.)
+export function formatThaiDateShort(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${d} ${MONTHS_SHORT[m - 1]} ${y + 543}`;
+}
+
 export function thaiWeekday(iso) {
   return WEEKDAYS[new Date(parseISO(iso)).getUTCDay()];
 }

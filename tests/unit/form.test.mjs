@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  validateForm, toggleTeacher, dateGuard, reportFileName, buildRenderModel,
+  validateForm, toggleTeacher, dateGuard, reportFileName, fileShortName, buildRenderModel,
   pickBackground, reconcileSelection, MAX_TEACHERS, rollToday, nextSentRecord, isSentToday,
 } from '../../site/js/form.js';
 
@@ -88,6 +88,14 @@ describe('dateGuard', () => {
 describe('helpers', () => {
   it('reportFileName', () => {
     expect(reportFileName('ช่างกล8', '2026-10-23', '0742')).toBe('วันเพจ_ช่างกล8_2026-10-23_0742.png');
+  });
+  it('reportFileName: ชื่อย่อยาว/อักขระต้องห้าม → ตัดเหลือ ≤ 12 ตัว ไม่ทิ้งวรรณยุกต์ค้าง', () => {
+    expect(fileShortName('การท่าอากาศยาน')).toBe('การท่าอากาศย');
+    expect(fileShortName('ใต้ร่มพระบารมี')).toBe('ใต้ร่มพระบาร');
+    expect(fileShortName('คอนราดเฮงเค็ล')).toBe('คอนราดเฮงเค็');
+    expect(fileShortName('ช่าง/กล_8')).toBe('ช่างกล8');
+    expect(fileShortName('')).toBe('รร');
+    for (const s of ['การท่าอากาศยาน', 'ใต้ร่มพระบารมี', 'คอนราดเฮงเค็ล']) expect(fileShortName(s).length).toBeLessThanOrEqual(12);
   });
   it('buildRenderModel keeps tap order and labels', () => {
     const st = full({ selectedTeacherIds: ['t3', 't1'], photos: [{ ...photo, label: 'อาคารเรียน', icon: 'building' }, photo, null, photo] });

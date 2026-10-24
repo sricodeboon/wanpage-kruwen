@@ -115,7 +115,7 @@ test('save button is purple (not LINE green) when file sharing is unavailable', 
   await expect(page.locator('#chromeBox')).toBeVisible();
 });
 
-test('tap targets are at least 52px (label chips 48px)', async ({ page }) => {
+test('tap targets are at least 52px (label chips 48px main / 36px small)', async ({ page }) => {
   await routeSheets(page);
   await page.goto('/?s=changkon8');
   await page.locator('.t').first().click();
@@ -126,26 +126,34 @@ test('tap targets are at least 52px (label chips 48px)', async ({ page }) => {
     expect(b.height, sel).toBeGreaterThanOrEqual(52);
     expect(b.width, sel).toBeGreaterThanOrEqual(52);
   }
-  // ป้ายชื่อรูป: พื้นที่แตะจริงคือ ::before สูง 48px (ไม่กินช่องรูปเล็กเกือบทั้งช่อง)
-  const hit = await page.locator('.slot[data-index="1"] .lbl').evaluate((el) => {
+  // ป้ายชื่อรูป: พื้นที่แตะจริงคือ ::before — ช่องหลัก 48px, ช่องเล็ก 36px (ไม่กินกลางช่องรูปเล็กที่สูงแค่ ~80px)
+  const hitOf = (i) => page.locator(`.slot[data-index="${i}"] .lbl`).evaluate((el) => {
     const cs = getComputedStyle(el, '::before');
     return [parseFloat(cs.height), parseFloat(cs.width)];
   });
-  expect(hit[0]).toBeGreaterThanOrEqual(48);
+  const hit0 = await hitOf(0);
+  expect(hit0[0]).toBeGreaterThanOrEqual(48);
+  const hit = await hitOf(1);
+  expect(hit[0]).toBeGreaterThanOrEqual(36);
   expect(hit[1]).toBeGreaterThanOrEqual(48);
   // เลื่อนช่องรูปมากลางจอก่อน (ไม่ให้ถูกปุ่มรายงานที่ติดล่างจอบัง) แล้วค่อยวัดพิกัดแตะ
   await page.locator('.slot[data-index="1"]').evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
   const slot = await page.locator('.slot[data-index="1"]').boundingBox();
-  expect(hit[0] / slot.height, 'พื้นที่แตะป้ายต้องไม่กินช่องรูปเล็กเกินครึ่ง').toBeLessThanOrEqual(0.6);
-  // แตะเหนือป้าย (ยังอยู่ในพื้นที่ 48px) ต้องเปิดแผ่นป้ายชื่อ
+  expect(hit[0] / slot.height, 'พื้นที่แตะป้ายต้องไม่ถึงกลางช่องรูปเล็ก').toBeLessThan(0.5);
+  // แตะเหนือป้าย (ยังอยู่ในพื้นที่ 36px) ต้องเปิดแผ่นป้ายชื่อ
   const lb = await page.locator('.slot[data-index="1"] .lbl').boundingBox();
-  await page.mouse.click(lb.x + 4, lb.y + lb.height - 40);
+  await page.mouse.click(lb.x + 4, lb.y + lb.height - 32);
   await expect(page.locator('#labelSheet')).toBeVisible();
   await page.locator('#labelCancel').click();
   // แตะส่วนบนของช่องรูปเล็ก (เหนือพื้นที่ป้าย) ต้องเปิดเมนูรูป ไม่ใช่แผ่นป้ายชื่อ
   await page.mouse.click(slot.x + slot.width / 2, slot.y + 12);
   await expect(page.locator('#slotSheet')).toBeVisible();
   await expect(page.locator('#labelSheet')).toBeHidden();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#slotSheet')).toBeHidden();
+  // แตะกลางช่องรูปเล็ก = เมนูรูป
+  await page.mouse.click(slot.x + slot.width / 2, slot.y + slot.height / 2);
+  await expect(page.locator('#slotSheet')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.locator('#slotSheet')).toBeHidden();
   await fillCheckEdit(page);
@@ -241,10 +249,14 @@ test('a back-dated report does not show "sent today"', async ({ page }) => {
   await page.addInitScript(() => { navigator.canShare = () => true; navigator.share = async () => {}; });
   await routeSheets(page);
   await page.goto('/?s=changkon8');
+  await expect(page.locator('#schoolName')).toContainText('ช่างกล');
   await page.locator('#editDate').click();
-  const iso = await page.locator('#dateInput').getAttribute('min');
-  await page.locator('#dateInput').fill(iso);
-  await page.locator('#dateInput').dispatchEvent('change');
+  // แผ่นเลือกวันแสดง พ.ศ. (ไม่ใช่ปฏิทิน ค.ศ. ของเครื่อง) — วันเก่าสุด = รายการสุดท้าย (ก่อนปุ่มยกเลิก)
+  await expect(page.locator('#dateSheet')).toContainText(/25\d\d/);
+  const oldest = page.locator('#dateSheet .sheet-item[data-act]').last();
+  const iso = await oldest.getAttribute('data-act');
+  expect(iso).toBe(await page.locator('#dateInput').getAttribute('min'));
+  await oldest.click();
   await expect(page.locator('#notTodayBadge')).toBeVisible();
   await fillAndCreate(page);
   await page.locator('#shareBtn').click();
