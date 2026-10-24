@@ -8,8 +8,8 @@
 <meta name="robots" content="noindex">
 <title>วันเพจครูเวร</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/icon-192.png" type="image/png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/favicon-48.png" type="image/png" sizes="48x48">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="preload" href="assets/fonts/kanit-500-thai.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/kanit-700-thai.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/kanit-500-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -21,6 +21,13 @@
 <script type="module" src="app.js"></script>
 </head>
 <body data-state="boot">
+
+<!-- หน้าเปิดแอป (แสดงเฉพาะ boot/data — app.js ซ่อนเมื่อเข้าฟอร์ม; โหลดเร็วกว่า 150 ms จะไม่เห็น) -->
+<div id="boot" class="boot" aria-hidden="true">
+  <span class="brand-coin boot-coin"><img class="brand-mascot" src="assets/brand/kruwan-bust.png" alt="" width="120" height="120" decoding="async"></span>
+  <b class="boot-name">วันเพจครูเวร</b>
+  <span class="boot-sub">รายงานครูเวร เสร็จใน 1 นาที</span>
+</div>
 
 <!-- แถบเตือนเมื่อเปิดใน LINE (ใช้งานต่อได้) -->
 <div id="lineBar" class="linebar" hidden>
@@ -35,13 +42,15 @@
     <div class="container-fluid gap-3 px-3 flex-nowrap justify-content-start">
       <span class="head-logo-wrap" id="schoolLogoWrap" hidden><img id="schoolLogo" class="head-logo" alt="" width="56" height="40" hidden></span>
       <div class="min-w-0">
+        <span class="brand-name">วันเพจครูเวร</span>
         <b id="schoolName" class="navbar-brand d-block p-0 m-0 text-wrap">วันเพจครูเวร</b>
         <button id="changeSchool" type="button" class="btn btn-link linkbtn small" hidden>ไม่ใช่โรงเรียนนี้? เปลี่ยน</button>
       </div>
+      <span class="brand-coin ms-auto" aria-hidden="true"><img class="brand-mascot" src="assets/brand/kruwan-bust.png" alt="" width="48" height="48" decoding="async" fetchpriority="low"><span class="brand-blink"></span></span>
     </div>
   </nav>
 
-  <div class="px-3 pt-3 d-grid gap-2">
+  <div class="px-3 pt-2 d-grid gap-2">
     <div id="schoolPick" class="card shadow-sm" hidden>
       <div class="card-body">
         <label class="form-label sec-title" for="schoolSelect">เลือกโรงเรียน</label>
@@ -64,25 +73,31 @@
   <!-- ① ครูเวร -->
   <section id="secTeachers" class="card shadow-sm sec sec-blue" aria-labelledby="hTeachers">
     <div class="card-body">
-      <h2 id="hTeachers" class="sec-title"><span class="sec-no">1</span>ครูเวรประจำวันที่ <span id="teacherCount" class="badge rounded-pill badge-blue ms-auto" aria-live="polite" hidden></span></h2>
-      <div class="d-flex flex-wrap align-items-center gap-2">
-        <div id="dateText" class="date-pill"></div>
-        <span id="notTodayBadge" class="badge rounded-pill badge-orange" hidden>ไม่ใช่วันนี้</span>
+      <h2 id="hTeachers" class="sec-title"><span class="sec-no">1</span>ครูเวร <span id="teacherCount" class="badge rounded-pill badge-blue ms-auto" aria-live="polite" hidden></span></h2>
+      <div class="t-body">
+        <div class="t-head">
+          <div id="dateText" class="date-pill"></div>
+          <span id="notTodayBadge" class="badge rounded-pill badge-orange" hidden>ไม่ใช่วันนี้</span>
+          <button id="editDate" type="button" class="btn btn-link linkbtn ms-auto">แก้วันที่</button>
+        </div>
+        <input id="dateInput" type="hidden" aria-label="วันที่เข้าเวร">
+        <p id="dateMsg" class="msg" hidden></p>
+        <button id="reuseChip" type="button" class="btn btn-gold-soft rounded-pill tap mt-2" hidden></button>
+        <div id="teacherList" class="tlist tgrid mt-2" role="group" aria-label="รายชื่อครูเวร"></div>
+        <button id="moreTeachers" type="button" class="btn btn-light w-100 tap mt-2" aria-expanded="false" aria-controls="teacherList" hidden></button>
+        <p id="teacherMsg" class="msg" role="status" hidden></p>
+        <button id="nextPhotos" type="button" class="btn btn-outline-primary w-100 tap mt-2" hidden>เลือกครบแล้ว ถัดไป ↓</button>
       </div>
-      <button id="editDate" type="button" class="btn btn-link linkbtn">แก้วันที่</button>
-      <input id="dateInput" type="hidden" aria-label="วันที่เข้าเวร">
-      <p id="dateMsg" class="msg" hidden></p>
-      <button id="reuseChip" type="button" class="btn btn-gold-soft rounded-pill tap mt-2" hidden></button>
-      <div id="teacherList" class="list-group tlist mt-3" role="group" aria-label="รายชื่อครูเวร"></div>
-      <p id="teacherMsg" class="msg" role="status" hidden></p>
-      <button id="nextPhotos" type="button" class="btn btn-outline-primary btn-lg w-100 tap mt-3" hidden>ถัดไป: รูปถ่าย ↓</button>
+      <div id="teacherSummary" class="t-sum" role="status" aria-live="polite" hidden>
+        <span class="t-sum-ok" aria-hidden="true">✓</span><span class="t-sum-text"></span><button id="editTeachers" type="button" class="btn btn-link linkbtn tap">แก้ไข</button>
+      </div>
     </div>
   </section>
 
   <!-- ② รูปถ่าย -->
   <section id="secPhotos" class="card shadow-sm sec sec-orange" aria-labelledby="hPhotos">
     <div class="card-body">
-      <h2 id="hPhotos" class="sec-title"><span class="sec-no">2</span>รูปถ่ายวันนี้ 4 ภาพ <span class="badge rounded-pill badge-gold ms-auto">ถ่ายใหม่วันนี้</span></h2>
+      <h2 id="hPhotos" class="sec-title" title="ถ่ายใหม่วันนี้"><span class="sec-no">2</span>รูปถ่ายวันนี้ 4 ภาพ</h2>
       <div id="photoGrid" class="pgrid"></div>
       <p id="photoMsg" class="msg" role="alert" hidden></p>
     </div>
@@ -92,18 +107,19 @@
   <section id="secBg" class="card shadow-sm sec sec-magenta" aria-labelledby="hBg">
     <div class="card-body">
       <h2 class="sec-title"><span class="sec-no">3</span><span id="hBg">พื้นหลัง</span></h2>
-      <p id="bgPicked" class="bg-picked" aria-live="polite" hidden></p>
-      <div class="d-flex gap-3 align-items-start">
-        <div class="pv-frame">
-          <canvas id="preview" width="256" height="384" aria-label="ตัวอย่างภาพรายงาน"></canvas>
-          <button id="tapPreview" type="button" class="pv-tap" hidden>แตะเพื่อดูตัวอย่าง</button>
+      <div class="bg-row">
+        <div class="pv-col">
+          <div class="pv-frame">
+            <canvas id="preview" width="256" height="384" aria-label="ตัวอย่างภาพรายงาน (ตัวอย่างสด เปลี่ยนพื้นหลัง รูป หรือครูเวร ภาพนี้เปลี่ยนตามทันที)"></canvas>
+            <button id="tapPreview" type="button" class="pv-tap" hidden>แตะเพื่อดูตัวอย่าง</button>
+            <button id="bigPreviewBtn" type="button" class="btn btn-light tap pv-big" aria-label="ดูภาพใหญ่">⤢</button>
+          </div>
         </div>
-        <div class="pv-text">
-          <b>ตัวอย่างสด</b><br>เปลี่ยนพื้นหลัง รูป หรือครูเวร ภาพนี้เปลี่ยนตามทันที<br>
-          <button id="bigPreviewBtn" type="button" class="btn btn-outline-primary tap mt-2">ดูภาพใหญ่</button>
+        <div class="bg-col">
+          <div id="bgList" class="bgs" role="radiogroup" aria-label="พื้นหลัง"></div>
+          <p id="bgPicked" class="bg-picked" aria-live="polite" hidden></p>
         </div>
       </div>
-      <div id="bgList" class="bgs" role="radiogroup" aria-label="พื้นหลัง"></div>
       <p id="bgMsg" class="msg" hidden></p>
       <button id="retryTemplates" type="button" class="btn btn-outline-primary tap px-4 mt-2" hidden>ลองใหม่</button>
     </div>
@@ -111,8 +127,12 @@
 
   <div class="cta-space"></div>
   <div class="cta-wrap fixed-bottom">
-    <div class="app-col px-3">
-      <p id="ctaMsg" class="cta-msg" aria-live="polite"></p>
+    <div class="app-col px-3 cta-col">
+      <img class="cta-mascot" src="assets/brand/kruwan-thumb.png" alt="" aria-hidden="true" width="25" height="64" decoding="async" hidden>
+      <div class="cta-row">
+        <span id="progressDots" class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <p id="ctaMsg" class="cta-msg" aria-live="polite"></p>
+      </div>
       <button id="cta" type="button" class="btn btn-lg rounded-pill w-100 cta off">สร้างภาพรายงาน</button>
     </div>
   </div>
@@ -127,6 +147,7 @@
       <button id="reportIssue" type="button" class="dropdown-item">แจ้งปัญหา</button>
     </div>
   </div>
+  <img class="done-mascot" src="assets/brand/kruwan-thumb.png" alt="" aria-hidden="true" width="120" height="160" decoding="async">
   <div class="done-ok" aria-hidden="true">✓</div>
   <h2 id="doneTitle" class="h4 fw-bold text-primary"></h2>
   <p class="text-body-secondary mb-0">ขอบคุณครับ</p>
@@ -137,6 +158,18 @@
 </section>
 
 <!-- หน้ายืนยัน / iOS บันทึก / ภาพใหญ่ / ช่องรูป / ป้ายชื่อ / กำลังสร้างภาพ = SweetAlert2 (js/ui.js) -->
+
+<!-- กันหน้าเปิดค้าง: app.js (module) ไม่ทำงานเลย (เบราว์เซอร์เก่า/แคช JS ไม่ครบ) → แสดงกล่องโหลดไม่ได้ + ลองใหม่
+     boot() ผูก retryLoad เป็นอย่างแรก จึงใช้แยก "ยังไม่เริ่ม" ออกจาก "เน็ตช้า" — ไม่ใช้แอนิเมชัน CSS เพราะ reduced-motion ปิดหมด -->
+<script>
+setTimeout(function () {
+  var retry = document.getElementById('retryLoad');
+  if (document.body.dataset.state !== 'boot' || retry.onclick) return;
+  retry.onclick = function () { location.reload(); };
+  document.getElementById('boot').hidden = true;
+  document.getElementById('loadFail').hidden = false;
+}, 12000);
+</script>
 
 </body>
 </html>

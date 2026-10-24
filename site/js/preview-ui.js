@@ -12,6 +12,9 @@ export function createPreview(ctx) {
   const { state, $, ls, log } = ctx;
   const bitmaps = [null, null, null, null];
   const p = { timer: 0, slow: 0, lowPower: ls.get('wp.lowPower') === '1', seq: 0 };
+  // เครื่องช้า → ปิดมาสคอตวนลูปด้วย (CSS html.low-power)
+  const markLowPower = () => document.documentElement.classList.add('low-power');
+  if (p.lowPower) markLowPower();
 
   function schedule() {
     if (!ctx.ready()) return;
@@ -52,6 +55,7 @@ export function createPreview(ctx) {
     if (p.slow >= 3) {
       log('preview slow → lowPower', Math.round(dt));
       p.lowPower = true;
+      markLowPower();
       ls.set('wp.lowPower', '1');
       $('tapPreview').hidden = false;
     }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  validateForm, toggleTeacher, dateGuard, reportFileName, fileShortName, buildRenderModel,
+  validateForm, toggleTeacher, dateGuard, reportFileName, nameParts, fileShortName, buildRenderModel,
   pickBackground, reconcileSelection, MAX_TEACHERS, rollToday, nextSentRecord, isSentToday,
 } from '../../site/js/form.js';
 
@@ -86,6 +86,18 @@ describe('dateGuard', () => {
 });
 
 describe('helpers', () => {
+  it('nameParts: ตัดยศ/คำนำหน้าออกจากชื่อต้น', () => {
+    expect(nameParts('นางสาวสีแพร ผิวเหลือง')).toEqual({ rank: 'นางสาว', given: 'สีแพร', sur: 'ผิวเหลือง' });
+    expect(nameParts('ด.ต.หญิงดารินทร์ อินทิแสง')).toEqual({ rank: 'ด.ต.หญิง', given: 'ดารินทร์', sur: 'อินทิแสง' });
+    expect(nameParts('นางสาวจิราวรรณ ชอบพวงดึ').given).toBe('จิราวรรณ');
+    expect(nameParts('นางกัณหา อันทะปัญญา').given).toBe('กัณหา');
+    expect(nameParts('นายปริญญา นวลสี').given).toBe('ปริญญา');
+    expect(nameParts('ร.ต.อ.วิทยา อุปทุม')).toEqual({ rank: 'ร.ต.อ.', given: 'วิทยา', sur: 'อุปทุม' });
+    expect(nameParts('ว่าที่ ร.ต.สมชาย ใจดี').given).toBe('สมชาย');
+    expect(nameParts('นางสาวธัญญารัตน์ไชยโพธิ์')).toEqual({ rank: 'นางสาว', given: 'ธัญญารัตน์ไชยโพธิ์', sur: '' });
+    expect(nameParts('นายิกา ทองดี').given).toBe('นายิกา'); // ชื่อที่ขึ้นด้วย "นาย" ไม่ถูกตัด
+    expect(nameParts('')).toEqual({ rank: '', given: '', sur: '' });
+  });
   it('reportFileName', () => {
     expect(reportFileName('ช่างกล8', '2026-10-23', '0742')).toBe('วันเพจ_ช่างกล8_2026-10-23_0742.png');
   });

@@ -2,25 +2,27 @@
 // state machine: boot → data → form → rendering → confirm → sharing → done
 import { todayBangkok, formatThaiDate, formatThaiDateShort, thaiWeekday, stampHHmm, addDaysISO } from './js/thaidate.js';
 import { loadData, refreshData } from './js/data.js';
-import { filterTemplates, splitRank, photoRects } from './js/layout.js';
+import { filterTemplates, photoRects } from './js/layout.js';
 import { createCanvas, canvasToBlob, renderOnePage } from './js/render.js';
 import { ensureFonts } from './js/fonts.js';
 import { isLineInApp, saveMode, externalBrowserUrl, canShareFile, sharePng, downloadFile, buildShareText } from './js/share.js';
 import { enqueue, archiveCopy } from './js/upload.js';
 import {
   validateForm, toggleTeacher, dateGuard, rollToday, reportFileName, buildRenderModel,
-  pickBackground, reconcileSelection, nextSentRecord, isSentToday, MSG, MAX_TEACHERS, MAX_BACK_DAYS,
+  pickBackground, reconcileSelection, nextSentRecord, isSentToday, nameParts, MSG, MAX_TEACHERS, MAX_BACK_DAYS,
 } from './js/form.js';
 import { createPreview } from './js/preview-ui.js';
 import { createDrive } from './js/drive-ui.js';
 import { createPhotos } from './js/photos-ui.js';
 import { loadJsonCached, validConfig, validTemplates } from './js/remote-json.js';
 import { createImageLoader, logoSrc, loadFinalAssets, loadPreviewAssets, AssetError } from './js/assets.js';
-import { panel, sheet, busyShow, busyHide, toast, info, closeAll } from './js/ui.js';
+import { panel, sheet, busyShow, busyHide, toast, info, closeAll, pulse } from './js/ui.js';
 
 const $ = (id) => document.getElementById(id);
 const PROVINCE_TH = { np: 'นครพนม', sn: 'สกลนคร', mdh: 'มุกดาหาร' };
 const MSG_FONTS = 'กำลังโหลดฟอนต์… (ครั้งแรกต้องต่อเน็ต)';
+const FOLD = 8; // ① แสดงครู 8 คนแรก ที่เหลือพับไว้
+const WEEKDAY_SHORT = { อาทิตย์: 'อา.', จันทร์: 'จ.', อังคาร: 'อ.', พุธ: 'พ.', พฤหัสบดี: 'พฤ.', ศุกร์: 'ศ.', เสาร์: 'ส.' };
 
 // ---------- บันทึกเหตุการณ์ (ring buffer 50) ----------
 const debugLog = [];
@@ -53,6 +55,8 @@ const ls = {
 const app = {
   phase: 'boot', config: {}, configFresh: false, model: null, templatesAll: null, templates: [], today: todayBangkok(),
   lastFile: null, lastReport: null, lastReportShared: false, queue: null,
+  teachersOpen: null, // null = เปิด/พับตามครูที่เลือก · true/false = ครูกดเอง (จำต่อ session)
+  cheered: false, cheerTimer: 0, // D5 เล่นครั้งแรกของรอบฟอร์มเท่านั้น
 };
 const state = { schoolId: null, dateISO: app.today, selectedTeacherIds: [], photos: [null, null, null, null], bgId: null };
 
@@ -60,6 +64,16 @@ function setPhase(p, extra) {
   log('state', app.phase, '→', p, extra || '');
   app.phase = p;
   document.body.dataset.state = p;
+  if (p !== 'boot' && p !== 'data') hideBoot();
+}
+
+// หน้าเปิดแอป (D1): โหลดเร็วกว่า 150 ms หรือลดการเคลื่อนไหว = ซ่อนทันที ไม่เล่นออก
+function hideBoot() {
+  const el = $('boot');
+  if (!el || el.hidden || el.classList.contains('boot-out')) return;
+  if (performance.now() < 150 || matchMedia('(prefers-reduced-motion: reduce)').matches) { el.hidden = true; return; }
+  el.classList.add('boot-out');
+  setTimeout(() => { el.hidden = true; }, 180);
 }
 
 const school = () => app.model?.schools.find((s) => s.school_id === state.schoolId) || null;
@@ -139,6 +153,7 @@ async function loadModel() {
     return r;
   } catch (e) {
     log('data error', String(e));
+    hideBoot(); // ไม่บังข้อความโหลดไม่ได้
     $('loadFail').hidden = false;
     return null;
   }
@@ -217,6 +232,8 @@ function setSchool(id) {
   $('schoolPick').hidden = true;
   $('schoolSelect').value = id;
   state.selectedTeacherIds = [];
+  app.teachersOpen = null;
+  resetFormRound();
   applyTemplates(school());
   renderAllSections();
 }
@@ -234,6 +251,7 @@ function renderAllSections() {
 function renderHeader() {
   const s = school();
   $('schoolName').textContent = s ? shortSchoolName(s) : 'วันเพจครูเวร';
+  document.querySelector('.app-head').classList.toggle('no-school', !s); // ไม่มีโรงเรียน: ชื่อแอปอยู่ใน #schoolName แล้ว
   $('changeSchool').hidden = !s;
   const logo = $('schoolLogo');
   const src = logoSrc(s);
@@ -261,6 +279,7 @@ function renderDate() {
   inp.max = app.today;
   inp.min = addDaysISO(app.today, -MAX_BACK_DAYS);
   inp.value = state.dateISO;
+  if (!$('teacherSummary').hidden) renderTeacherSummary();
 }
 
 // หน้าเปิดค้างข้ามวัน: คำนวณ "วันนี้" ใหม่ แล้วเลื่อน/ตรวจวันที่ด้วย rollToday
@@ -310,32 +329,79 @@ function renderTeachers() {
   const box = $('teacherList');
   box.innerHTML = '';
   const full = state.selectedTeacherIds.length >= MAX_TEACHERS;
-  for (const t of teachers()) {
+  const list = teachers();
+  list.forEach((t, k) => {
     const order = state.selectedTeacherIds.indexOf(t.teacher_id);
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'list-group-item list-group-item-action t';
+    b.className = 'list-group-item list-group-item-action t' + (k >= FOLD ? ' t-more' : ''); // ลำดับเดิม ไม่เรียงใหม่
     b.setAttribute('role', 'checkbox');
     b.setAttribute('aria-checked', String(order >= 0));
     b.setAttribute('aria-disabled', String(full && order < 0)); // แตะได้ เพื่อบอกเหตุผล
     b.dataset.id = t.teacher_id;
     b.innerHTML = `<span class="ck" aria-hidden="true">${order >= 0 ? order + 1 : ''}</span>`
-      + `<span><span class="t-name">${esc(t.display_name)}</span>${t.phone ? `<span class="t-phone">${esc(t.phone)}</span>` : ''}</span>`;
+      + `<span><span class="t-name">${nameWords(t.display_name)}</span>${t.phone ? `<span class="t-phone">${esc(t.phone)}</span>` : ''}</span>`;
     box.appendChild(b);
-  }
+  });
   const n = state.selectedTeacherIds.length;
   $('teacherCount').hidden = n === 0;
   $('teacherCount').textContent = `เลือกแล้ว ${n}/${MAX_TEACHERS} คน`;
   $('nextPhotos').hidden = n === 0;
+  renderMoreTeachers(list);
   renderReuseChip();
+  if (!n) setTeachersDone(false); else if (!$('teacherSummary').hidden) renderTeacherSummary();
+}
+
+// ปุ่ม "ดูครูอีก N คน" — เปิดเองเมื่อครูที่เลือก/ชุดเดิมอยู่หลังคนที่ 8
+function renderMoreTeachers(list) {
+  const late = new Set(list.slice(FOLD).map((t) => t.teacher_id));
+  const open = app.teachersOpen ?? [...state.selectedTeacherIds, ...storedSet()].some((id) => late.has(id));
+  const more = $('moreTeachers');
+  more.hidden = !late.size;
+  if (!late.size) return;
+  more.setAttribute('aria-expanded', String(open));
+  more.textContent = open ? 'ย่อรายชื่อ ▴' : `ดูครูอีก ${late.size} คน ▾`;
+  $('teacherList').classList.toggle('open', open);
 }
 
 function onTeacherTap(id) {
+  const was = state.selectedTeacherIds.includes(id);
   const r = toggleTeacher(state.selectedTeacherIds, id);
   state.selectedTeacherIds = r.selected;
   showMsg('teacherMsg', r.error);
   renderTeachers();
+  if (!was && r.selected.includes(id)) pulse($('teacherList').querySelector(`[data-id="${CSS.escape(id)}"] .ck`), 'pop');
   onChange();
+}
+
+// ยุบ ① เป็นแถวสรุป (หลัง "เลือกครบแล้ว ถัดไป") / ขยายกลับ
+function setTeachersDone(on) {
+  $('secTeachers').classList.toggle('is-done', on);
+  $('teacherSummary').hidden = !on;
+  if (on) renderTeacherSummary();
+}
+
+function renderTeacherSummary() {
+  const day = `${WEEKDAY_SHORT[thaiWeekday(state.dateISO)] || thaiWeekday(state.dateISO)} ${formatThaiDateShort(state.dateISO).replace(/ \d{4}$/, '')}`;
+  const late = state.dateISO !== app.today ? ' · <span class="t-sum-warn">ไม่ใช่วันนี้</span>' : ''; // .t-body ซ่อนอยู่ ป้ายเตือนวันที่จึงต้องมาอยู่ตรงนี้
+  $('teacherSummary').querySelector('.t-sum-text').innerHTML = `ครูเวร: ${esc(firstNames(state.selectedTeacherIds).join(', '))} · <span class="t-sum-day">${esc(day)}</span>${late}`;
+}
+
+function openTeachers() {
+  setTeachersDone(false);
+  $('secTeachers').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ชื่อในกริด 2 คอลัมน์: ตัดบรรทัดได้เฉพาะหลังยศและระหว่างชื่อ-นามสกุล (ICU ไม่รู้จักชื่อคน จะตัดกลางคำ) — textContent ยังเท่าชื่อเต็มเดิม
+function nameWords(name) {
+  const { rank, given, sur } = nameParts(name);
+  return `${esc(rank)}<wbr><span class="w">${esc(given)}</span>${sur ? ` <span class="w">${esc(sur)}</span>` : ''}`;
+}
+
+// ชื่อต้น (ตัดยศ/คำนำหน้า) สำหรับป้ายสั้น
+function firstNames(ids) {
+  const byId = new Map(teachers().map((t) => [t.teacher_id, t]));
+  return ids.filter((id) => byId.has(id)).map((id) => nameParts(byId.get(id).display_name).given);
 }
 
 function storedSet() {
@@ -348,9 +414,7 @@ function renderReuseChip() {
   const chip = $('reuseChip');
   chip.hidden = !ids.length || ids.join() === state.selectedTeacherIds.join();
   if (chip.hidden) return;
-  const byId = new Map(teachers().map((t) => [t.teacher_id, t]));
-  const names = ids.map((id) => { const parts = splitRank(byId.get(id).display_name); return (parts[1] || parts[0]).split(' ')[0]; });
-  chip.textContent = `↺ ใช้ชุดเดิม: ${names.join(', ')}`;
+  chip.textContent = `↺ ใช้ชุดเดิม: ${firstNames(ids).join(', ')}`;
 }
 
 // ---------- ③ พื้นหลัง ----------
@@ -402,8 +466,38 @@ const currentValidity = () => validateForm(state, app.model, !state.schoolId ? u
 function refreshValidity() {
   if (!app.model) return;
   const v = state.schoolId ? currentValidity() : { ok: false, message: 'เลือกโรงเรียน', target: null };
-  $('cta').classList.toggle('off', !v.ok);
+  const cta = $('cta');
+  const wasOff = cta.classList.contains('off');
+  cta.classList.toggle('off', !v.ok);
   $('ctaMsg').textContent = v.ok ? '' : v.message;
+  const [d1, d2, d3] = $('progressDots').children;
+  d1.classList.toggle('on', state.selectedTeacherIds.length > 0);
+  d2.classList.toggle('on', state.photos.every(Boolean));
+  d3.classList.toggle('on', Boolean(state.bgId && template()));
+  if (wasOff && v.ok && !app.cheered) cheer();
+}
+
+// D5: ปุ่มเด้ง + ครูวันโผล่มุมขวา 2.4 วิ (ครั้งแรกของรอบฟอร์ม)
+function cheer() {
+  app.cheered = true;
+  pulse($('cta'), 'ready');
+  const m = document.querySelector('.cta-mascot');
+  clearTimeout(app.cheerTimer);
+  m.classList.remove('out');
+  m.hidden = false;
+  app.cheerTimer = setTimeout(() => {
+    m.classList.add('out');
+    app.cheerTimer = setTimeout(() => { m.hidden = true; m.classList.remove('out'); }, 200);
+  }, 2400);
+}
+
+function resetFormRound() {
+  app.cheered = false;
+  clearTimeout(app.cheerTimer);
+  const m = document.querySelector('.cta-mascot');
+  m.hidden = true;
+  m.classList.remove('out');
+  setTeachersDone(false);
 }
 
 const SECTION = { teachers: 'secTeachers', photos: 'secPhotos', background: 'secBg' };
@@ -415,6 +509,7 @@ async function onCreate() {
   const v = currentValidity();
   if (!v.ok) {
     $('ctaMsg').textContent = v.message;
+    if (v.target === 'teachers') setTeachersDone(false);
     if (v.target) $(SECTION[v.target]).scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
   }
@@ -601,6 +696,8 @@ function again() {
   $('doneView').hidden = true;
   $('formView').hidden = false;
   setPhase('form', 'again');
+  resetFormRound();
+  app.teachersOpen = null;
   refreshToday();
   renderAllSections();
   window.scrollTo(0, 0);
@@ -611,13 +708,24 @@ function bindForm() {
   $('changeSchool').onclick = () => { $('schoolPick').hidden = false; $('schoolSelect').focus(); };
   $('schoolSelect').onchange = (e) => { if (e.target.value) setSchool(e.target.value); };
   $('editDate').onclick = openDateSheet;
-  $('nextPhotos').onclick = () => $('secPhotos').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('nextPhotos').onclick = () => { setTeachersDone(true); $('secPhotos').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  $('editTeachers').onclick = openTeachers;
+  $('moreTeachers').onclick = () => {
+    app.teachersOpen = $('moreTeachers').getAttribute('aria-expanded') !== 'true';
+    renderMoreTeachers(teachers());
+  };
   // ป้ายเหตุผลใต้ปุ่มรายงาน แตะแล้วพาไปส่วนที่ยังขาด
-  $('ctaMsg').onclick = () => { const v = state.schoolId && currentValidity(); if (v && !v.ok && v.target) $(SECTION[v.target]).scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  $('ctaMsg').onclick = () => {
+    const v = state.schoolId && currentValidity();
+    if (!v || v.ok || !v.target) return;
+    if (v.target === 'teachers') setTeachersDone(false);
+    $(SECTION[v.target]).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
   $('dateInput').onchange = onDateChange;
   $('teacherList').onclick = (e) => { const b = e.target.closest('.t'); if (b) onTeacherTap(b.dataset.id); };
   $('reuseChip').onclick = () => {
     state.selectedTeacherIds = storedSet();
+    app.teachersOpen = null; // กลับไปเปิด/พับตามครูที่เลือก ไม่ให้ครูที่ติ๊กไปซ่อนในส่วนที่พับ
     showMsg('teacherMsg', null);
     renderTeachers();
     onChange();
@@ -652,11 +760,15 @@ function bindForm() {
   if (wrap && typeof ResizeObserver === 'function') {
     new ResizeObserver(() => {
       const h = Math.ceil(wrap.getBoundingClientRect().height);
-      document.querySelector('.cta-space').style.height = `${h + 8}px`;
+      document.querySelector('.cta-space').style.height = `${h}px`; // ระยะห่างเหนือแถบ = margin ล่างของการ์ด
       document.documentElement.style.setProperty('--cta-h', `${h}px`);
     }).observe(wrap);
   }
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshToday(); });
+  document.documentElement.classList.toggle('paused', document.hidden); // เปิดในแท็บพื้นหลัง/prerender
+  document.addEventListener('visibilitychange', () => {
+    document.documentElement.classList.toggle('paused', document.hidden); // หยุดมาสคอตวนลูปเมื่อแท็บซ่อน
+    if (document.visibilityState === 'visible') refreshToday();
+  });
   window.addEventListener('pageshow', refreshToday);
 }
 
@@ -683,4 +795,4 @@ function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-boot().catch((e) => log('boot error', String(e?.stack || e)));
+boot().catch((e) => { log('boot error', String(e?.stack || e)); hideBoot(); });

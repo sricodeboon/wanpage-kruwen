@@ -35,12 +35,21 @@ export function toast(title, icon = 'info') {
   return toastMixin.fire({ title, icon });
 }
 
+// เล่นแอนิเมชันซ้ำได้ (เอาคลาสออก → reflow → ใส่ใหม่) แล้วถอดคลาสเมื่อจบ
+export function pulse(el, cls) {
+  if (!el) return;
+  el.classList.remove(cls);
+  void el.offsetWidth;
+  el.classList.add(cls);
+  el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+}
+
 // ---------- กำลังสร้างภาพ ----------
 export function busyShow(text) {
   if (isOpen('wp-busy')) { setBusyText(text); return; }
   ui.fire({
     title: 'กำลังสร้างภาพ…',
-    html: `<p id="busyText" class="mb-0"></p>`,
+    html: `<img class="busy-mascot" src="assets/brand/kruwan-wave.png" alt="" aria-hidden="true" width="38" height="96"><p id="busyText" class="mb-0"></p>`,
     allowOutsideClick: false, allowEscapeKey: false, showConfirmButton: false,
     customClass: { popup: 'wp-swal wp-busy' },
     didOpen: () => { setBusyText(text); Swal.showLoading(); },

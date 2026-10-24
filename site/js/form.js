@@ -64,6 +64,13 @@ export function fileShortName(shortName) {
   return t.slice(0, n);
 }
 
+// แยกชื่อครูเป็น ยศ/คำนำหน้า · ชื่อต้น · นามสกุล (ป้ายสั้น + ตัดบรรทัดในกริด) — ไม่ใช้กับ render (layout.splitRank)
+const NAME_RE = /^((?:[ก-ฮ][ก-๎]{0,3}\.)+(?:หญิง)?|ว่าที่\s?(?:[ก-ฮ][ก-๎]{0,3}\.)+(?:หญิง)?|(?:นางสาว|นาง|นาย)(?=[ก-ฮเ-ไ]))?\s*(\S+)\s*(.*)$/u;
+export function nameParts(name) {
+  const m = String(name ?? '').trim().match(NAME_RE) || [];
+  return { rank: m[1] || '', given: m[2] || '', sur: m[3] || '' };
+}
+
 export function reportFileName(shortName, dateISO, hhmm) {
   return `วันเพจ_${fileShortName(shortName)}_${dateISO}_${hhmm}.png`;
 }

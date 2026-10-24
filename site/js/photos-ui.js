@@ -15,6 +15,7 @@ export function createPhotos(ctx) {
   const { app, state, $, log, esc, showMsg } = ctx;
   const thumbUrls = [null, null, null, null];
   const failed = new Set(); // ช่องที่รูปล่าสุดเปิดไม่ได้ → กรอบเตือนในช่อง จนกว่าจะเลือกรูปใหม่สำเร็จ/เอาออก
+  let prevFilled = [false, false, false, false]; // D4: ช่องที่เพิ่งมีรูป (ว่าง → มี) ได้คลาส just
 
   const layout = () => ctx.template()?.photo_layout || '1+3';
   // 2x2/2+2 ทุกช่องกว้างเท่ากัน → เรียกตามลำดับ; แบบอื่นช่อง 0 = ภาพใหญ่ (ตำแหน่งต่างกันตามแม่แบบ)
@@ -37,13 +38,14 @@ export function createPhotos(ctx) {
     grid.dataset.layout = tpl.photo_layout;
     grid.innerHTML = '';
     rects.forEach((r, i) => grid.appendChild(slotEl(r, i, tpl.photo_layout, { minX, minY, W, H })));
+    prevFilled = state.photos.map(Boolean);
   }
 
   function slotEl(r, i, lay, box) {
     const p = state.photos[i];
     const slot = document.createElement('div');
     const bad = failed.has(i);
-    slot.className = 'slot' + (p ? ' filled' : '') + (bad ? ' error' : '');
+    slot.className = 'slot' + (p ? ' filled' : '') + (bad ? ' error' : '') + (p && !prevFilled[i] ? ' just' : '');
     slot.dataset.index = i;
     Object.assign(slot.style, {
       left: `${((r.x - box.minX) / box.W) * 100}%`, top: `${((r.y - box.minY) / box.H) * 100}%`,
