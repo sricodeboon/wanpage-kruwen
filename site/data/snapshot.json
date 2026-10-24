@@ -99,29 +99,29 @@
       "logo_file": "",
       "default_bg": "np-01",
       "sort_order": 10
+    },
+    {
+      "school_id": "tairom",
+      "short_name": "ใต้ร่มพระบารมี",
+      "name_full": "ศูนย์การเรียนตำรวจตระเวนชายแดนใต้ร่มพระบารมี (ธอส.อุปถัมภ์)",
+      "address": "ต.บ้านค้อ อ.คำชะอี จ.มุกดาหาร",
+      "province": "mdh",
+      "logo_file": "",
+      "default_bg": "mdh-01",
+      "sort_order": 11
     }
   ],
   "teachersBySchool": {
     "changkon8": [
       {
-        "teacher_id": "changkon8-01",
+        "teacher_id": "changkon8-10",
         "school_id": "changkon8",
-        "display_name": "ส.ต.ท.รัชเดช ศรีแก้ว"
+        "display_name": "ร.ต.อ.วิทยา อุปทุม"
       },
       {
-        "teacher_id": "changkon8-02",
+        "teacher_id": "changkon8-09",
         "school_id": "changkon8",
-        "display_name": "นางสาวสุทัตตา เกษี"
-      },
-      {
-        "teacher_id": "changkon8-03",
-        "school_id": "changkon8",
-        "display_name": "นายปริญญา นวลสี"
-      },
-      {
-        "teacher_id": "changkon8-04",
-        "school_id": "changkon8",
-        "display_name": "นางกัณหา อันทะปัญญา"
+        "display_name": "ร.ต.ท.คเชนทร์ ผลจันทร์"
       },
       {
         "teacher_id": "changkon8-05",
@@ -134,24 +134,34 @@
         "display_name": "ด.ต.หญิงเรไร ปิดตะ"
       },
       {
-        "teacher_id": "changkon8-07",
-        "school_id": "changkon8",
-        "display_name": "จ.ส.ต.หญิงหนูสิน เกษี"
-      },
-      {
         "teacher_id": "changkon8-08",
         "school_id": "changkon8",
         "display_name": "ด.ต.หญิงดารินทร์ อินทิแสง"
       },
       {
-        "teacher_id": "changkon8-09",
+        "teacher_id": "changkon8-07",
         "school_id": "changkon8",
-        "display_name": "ร.ต.ท.คเชนทร์ ผลจันทร์"
+        "display_name": "จ.ส.ต.หญิงหนูสิน เกษี"
       },
       {
-        "teacher_id": "changkon8-10",
+        "teacher_id": "changkon8-01",
         "school_id": "changkon8",
-        "display_name": "ร.ต.อ.วิทยา อุปทุม"
+        "display_name": "ส.ต.ท.รัชเดช ศรีแก้ว"
+      },
+      {
+        "teacher_id": "changkon8-03",
+        "school_id": "changkon8",
+        "display_name": "นายปริญญา นวลสี"
+      },
+      {
+        "teacher_id": "changkon8-04",
+        "school_id": "changkon8",
+        "display_name": "นางกัณหา อันทะปัญญา"
+      },
+      {
+        "teacher_id": "changkon8-02",
+        "school_id": "changkon8",
+        "display_name": "นางสาวสุทัตตา เกษี"
       },
       {
         "teacher_id": "changkon8-11",
@@ -176,6 +186,36 @@
     ],
     "cocknis": [
       {
+        "teacher_id": "cocknis-08",
+        "school_id": "cocknis",
+        "display_name": "ด.ต.วีรวร เสนาศรี"
+      },
+      {
+        "teacher_id": "cocknis-15",
+        "school_id": "cocknis",
+        "display_name": "จ.ส.ต.หญิงจุฑามาศ บัวพรม"
+      },
+      {
+        "teacher_id": "cocknis-13",
+        "school_id": "cocknis",
+        "display_name": "ส.ต.ท.จักรพันธ์ ชานุชิต"
+      },
+      {
+        "teacher_id": "cocknis-19",
+        "school_id": "cocknis",
+        "display_name": "ส.ต.ท.หญิงกมลทิพย์ แก้วมะ"
+      },
+      {
+        "teacher_id": "cocknis-22",
+        "school_id": "cocknis",
+        "display_name": "ส.ต.ท.หญิงจุฬาลักษณ์ ประเสริฐสังข์"
+      },
+      {
+        "teacher_id": "cocknis-21",
+        "school_id": "cocknis",
+        "display_name": "ส.ต.ต.สุทธวีร์ เหลืองชารี"
+      },
+      {
         "teacher_id": "cocknis-01",
         "school_id": "cocknis",
         "display_name": "นายชัยวัฒน์ เรืองชัยภัคศิริ"
@@ -196,11 +236,6 @@
         "display_name": "นายยุทธนา เชียงไขแก้ว"
       },
       {
-        "teacher_id": "cocknis-05",
-        "school_id": "cocknis",
-        "display_name": "นางทัศนีย์ ผาใต้"
-      },
-      {
         "teacher_id": "cocknis-06",
         "school_id": "cocknis",
         "display_name": "นายภานุพงษ์ แก้วมะ"
@@ -211,14 +246,19 @@
         "display_name": "นายบุญเลิศ แก้วมะ"
       },
       {
-        "teacher_id": "cocknis-08",
-        "school_id": "cocknis",
-        "display_name": "ด.ต.วีรวร เสนาศรี"
-      },
-      {
         "teacher_id": "cocknis-09",
         "school_id": "cocknis",
         "display_name": "นายกึ้ม แก้วมะ"
+      },
+      {
+        "teacher_id": "cocknis-05",
+        "school_id": "cocknis",
+        "display_name": "นางทัศนีย์ ผาใต้"
+      },
+      {
+        "teacher_id": "cocknis-20",
+        "school_id": "cocknis",
+        "display_name": "นางสุภาภรณ์ โพธิราช"
       },
       {
         "teacher_id": "cocknis-10",
@@ -236,19 +276,9 @@
         "display_name": "นางสาวศศินา สุภาอ้วน"
       },
       {
-        "teacher_id": "cocknis-13",
-        "school_id": "cocknis",
-        "display_name": "ส.ต.ท.จักรพันธ์ ชานุชิต"
-      },
-      {
         "teacher_id": "cocknis-14",
         "school_id": "cocknis",
         "display_name": "นางสาวจุไรภรณ์ แก้วมะ"
-      },
-      {
-        "teacher_id": "cocknis-15",
-        "school_id": "cocknis",
-        "display_name": "จ.ส.ต.หญิงจุฑามาศ บัวพรม"
       },
       {
         "teacher_id": "cocknis-16",
@@ -266,26 +296,6 @@
         "display_name": "นางสาวอาภรณ์ ลามคำ"
       },
       {
-        "teacher_id": "cocknis-19",
-        "school_id": "cocknis",
-        "display_name": "ส.ต.ท.หญิงกมลทิพย์ แก้วมะ"
-      },
-      {
-        "teacher_id": "cocknis-20",
-        "school_id": "cocknis",
-        "display_name": "นางสุภาภรณ์ โพธิราช"
-      },
-      {
-        "teacher_id": "cocknis-21",
-        "school_id": "cocknis",
-        "display_name": "ส.ต.ต.สุทธวีร์ เหลืองชารี"
-      },
-      {
-        "teacher_id": "cocknis-22",
-        "school_id": "cocknis",
-        "display_name": "ส.ต.ท.หญิงจุฬาลักษณ์ ประเสริฐสังข์"
-      },
-      {
         "teacher_id": "cocknis-23",
         "school_id": "cocknis",
         "display_name": "นางสาวเพชรรุ่ง ชินบุตร"
@@ -293,9 +303,44 @@
     ],
     "airport": [
       {
+        "teacher_id": "airport-15",
+        "school_id": "airport",
+        "display_name": "ด.ต.พิษณุ เปรมไธสง"
+      },
+      {
+        "teacher_id": "airport-13",
+        "school_id": "airport",
+        "display_name": "จ.ส.ต.หญิงสุกัญญา ยิ่งเลิศ"
+      },
+      {
         "teacher_id": "airport-01",
         "school_id": "airport",
         "display_name": "ส.ต.อ.หญิงวิไลพร โพธิ์สัย"
+      },
+      {
+        "teacher_id": "airport-09",
+        "school_id": "airport",
+        "display_name": "ส.ต.อ.ธวัชชัย นิลมาตย์"
+      },
+      {
+        "teacher_id": "airport-11",
+        "school_id": "airport",
+        "display_name": "ส.ต.ท.หญิงแก้วปัญญา ศรีหาตา"
+      },
+      {
+        "teacher_id": "airport-05",
+        "school_id": "airport",
+        "display_name": "นายปิติวงศ์ คนไว"
+      },
+      {
+        "teacher_id": "airport-12",
+        "school_id": "airport",
+        "display_name": "นายทศพล จำศิล"
+      },
+      {
+        "teacher_id": "airport-14",
+        "school_id": "airport",
+        "display_name": "นายอภิศักดิ์ โถแก้วเขียว"
       },
       {
         "teacher_id": "airport-02",
@@ -313,11 +358,6 @@
         "display_name": "นางสาวอรอนงค์ นามเสนา"
       },
       {
-        "teacher_id": "airport-05",
-        "school_id": "airport",
-        "display_name": "นายปิติวงศ์ คนไว"
-      },
-      {
         "teacher_id": "airport-06",
         "school_id": "airport",
         "display_name": "นางสาวกัลยาณี ศรีหาตา"
@@ -333,39 +373,9 @@
         "display_name": "นางสาวปวัตตา เวียงนนท์"
       },
       {
-        "teacher_id": "airport-09",
-        "school_id": "airport",
-        "display_name": "ส.ต.อ.ธวัชชัย นิลมาตย์"
-      },
-      {
         "teacher_id": "airport-10",
         "school_id": "airport",
         "display_name": "นางสาวพรณพรรทธ์ แสนดี"
-      },
-      {
-        "teacher_id": "airport-11",
-        "school_id": "airport",
-        "display_name": "ส.ต.ท.หญิงแก้วปัญญา ศรีหาตา"
-      },
-      {
-        "teacher_id": "airport-12",
-        "school_id": "airport",
-        "display_name": "นายทศพล จำศิล"
-      },
-      {
-        "teacher_id": "airport-13",
-        "school_id": "airport",
-        "display_name": "จ.ส.ต.หญิงสุกัญญา ยิ่งเลิศ"
-      },
-      {
-        "teacher_id": "airport-14",
-        "school_id": "airport",
-        "display_name": "นายอภิศักดิ์ โถแก้วเขียว"
-      },
-      {
-        "teacher_id": "airport-15",
-        "school_id": "airport",
-        "display_name": "ด.ต.พิษณุ เปรมไธสง"
       },
       {
         "teacher_id": "airport-16",
@@ -380,19 +390,44 @@
         "display_name": "ด.ต.หญิงธนภร หัสดง"
       },
       {
-        "teacher_id": "pakhuaymuang-02",
-        "school_id": "pakhuaymuang",
-        "display_name": "นางสาวอาริยา แวงดา"
-      },
-      {
         "teacher_id": "pakhuaymuang-03",
         "school_id": "pakhuaymuang",
         "display_name": "ด.ต.หญิงนิภาพรรณ ริยะบุตร"
       },
       {
+        "teacher_id": "pakhuaymuang-07",
+        "school_id": "pakhuaymuang",
+        "display_name": "ด.ต.หญิงไพรัช ริยะบุตร"
+      },
+      {
+        "teacher_id": "pakhuaymuang-12",
+        "school_id": "pakhuaymuang",
+        "display_name": "จ.ส.ต.พนมพร ตะระแจ่ม"
+      },
+      {
+        "teacher_id": "pakhuaymuang-08",
+        "school_id": "pakhuaymuang",
+        "display_name": "ส.ต.อ.หญิงพัชระ ริยะบุตร"
+      },
+      {
+        "teacher_id": "pakhuaymuang-10",
+        "school_id": "pakhuaymuang",
+        "display_name": "ส.ต.อ.หญิงภัทราภรณ์ รักศิลป์"
+      },
+      {
         "teacher_id": "pakhuaymuang-04",
         "school_id": "pakhuaymuang",
         "display_name": "ส.ต.ท.หญิงจุฑารัตน์ วงค์พระจันทร์"
+      },
+      {
+        "teacher_id": "pakhuaymuang-11",
+        "school_id": "pakhuaymuang",
+        "display_name": "นายพัฒนา นนทะเสน"
+      },
+      {
+        "teacher_id": "pakhuaymuang-02",
+        "school_id": "pakhuaymuang",
+        "display_name": "นางสาวอาริยา แวงดา"
       },
       {
         "teacher_id": "pakhuaymuang-05",
@@ -405,41 +440,16 @@
         "display_name": "นางสาวสุมิตรา แสงอินทร์"
       },
       {
-        "teacher_id": "pakhuaymuang-07",
-        "school_id": "pakhuaymuang",
-        "display_name": "ด.ต.หญิงไพรัช ริยะบุตร"
-      },
-      {
-        "teacher_id": "pakhuaymuang-08",
-        "school_id": "pakhuaymuang",
-        "display_name": "ส.ต.อ.หญิงพัชระ ริยะบุตร"
-      },
-      {
         "teacher_id": "pakhuaymuang-09",
         "school_id": "pakhuaymuang",
         "display_name": "นางสาวธัญญารัตน์ไชยโพธิ์"
-      },
-      {
-        "teacher_id": "pakhuaymuang-10",
-        "school_id": "pakhuaymuang",
-        "display_name": "ส.ต.อ.หญิงภัทราภรณ์ รักศิลป์"
-      },
-      {
-        "teacher_id": "pakhuaymuang-11",
-        "school_id": "pakhuaymuang",
-        "display_name": "นายพัฒนา นนทะเสน"
-      },
-      {
-        "teacher_id": "pakhuaymuang-12",
-        "school_id": "pakhuaymuang",
-        "display_name": "จ.ส.ต.พนมพร ตะระแจ่ม"
       }
     ],
     "hatsaipe": [
       {
-        "teacher_id": "hatsaipe-01",
+        "teacher_id": "hatsaipe-06",
         "school_id": "hatsaipe",
-        "display_name": "ส.ต.ท.หญิงอุไรรัตน์ คอแก้ว"
+        "display_name": "ด.ต.อภิสิทธิ์ หอมบุญมี"
       },
       {
         "teacher_id": "hatsaipe-02",
@@ -447,14 +457,19 @@
         "display_name": "จ.ส.ต.หญิงสุวรรษา ไชยพันโท"
       },
       {
-        "teacher_id": "hatsaipe-03",
-        "school_id": "hatsaipe",
-        "display_name": "นางสาววาสนา ฝ่ายพนอม"
-      },
-      {
         "teacher_id": "hatsaipe-04",
         "school_id": "hatsaipe",
         "display_name": "ส.ต.อ.หญิงจิรกานต์ ศรีพยอม"
+      },
+      {
+        "teacher_id": "hatsaipe-08",
+        "school_id": "hatsaipe",
+        "display_name": "ส.ต.อ.หญิงสุดารัตน์ ริยะบุตร"
+      },
+      {
+        "teacher_id": "hatsaipe-01",
+        "school_id": "hatsaipe",
+        "display_name": "ส.ต.ท.หญิงอุไรรัตน์ คอแก้ว"
       },
       {
         "teacher_id": "hatsaipe-05",
@@ -462,19 +477,14 @@
         "display_name": "ส.ต.ท.หญิงอังสนา จุลบาท"
       },
       {
-        "teacher_id": "hatsaipe-06",
+        "teacher_id": "hatsaipe-03",
         "school_id": "hatsaipe",
-        "display_name": "ด.ต.อภิสิทธิ์ หอมบุญมี"
+        "display_name": "นางสาววาสนา ฝ่ายพนอม"
       },
       {
         "teacher_id": "hatsaipe-07",
         "school_id": "hatsaipe",
         "display_name": "นางสาวอริสา สุขภูวงค์"
-      },
-      {
-        "teacher_id": "hatsaipe-08",
-        "school_id": "hatsaipe",
-        "display_name": "ส.ต.อ.หญิงสุดารัตน์ ริยะบุตร"
       },
       {
         "teacher_id": "hatsaipe-09",
@@ -484,9 +494,14 @@
     ],
     "jindapa": [
       {
-        "teacher_id": "jindapa-01",
+        "teacher_id": "jindapa-05",
         "school_id": "jindapa",
-        "display_name": "นางสาวชบา โสระเวช"
+        "display_name": "ร.ต.อ.สุรชัย คำผงแดง"
+      },
+      {
+        "teacher_id": "jindapa-13",
+        "school_id": "jindapa",
+        "display_name": "ร.ต.อ.สุรชัย วงคำแผง"
       },
       {
         "teacher_id": "jindapa-02",
@@ -504,9 +519,14 @@
         "display_name": "ด.ต.เสถียรพงศ์ ลมพัด"
       },
       {
-        "teacher_id": "jindapa-05",
+        "teacher_id": "jindapa-10",
         "school_id": "jindapa",
-        "display_name": "ร.ต.อ.สุรชัย คำผงแดง"
+        "display_name": "ด.ต.หญิงสุภาพร ภากุล"
+      },
+      {
+        "teacher_id": "jindapa-09",
+        "school_id": "jindapa",
+        "display_name": "จ.ส.ต.หญิงศิวภรณ์ พรหมเทศ"
       },
       {
         "teacher_id": "jindapa-06",
@@ -519,47 +539,27 @@
         "display_name": "ส.ต.ท.หญิงปาริชาติ ชินพลชาย"
       },
       {
-        "teacher_id": "jindapa-08",
-        "school_id": "jindapa",
-        "display_name": "นางสาวอรลภัสญา เพ็งดี"
-      },
-      {
-        "teacher_id": "jindapa-09",
-        "school_id": "jindapa",
-        "display_name": "จ.ส.ต.หญิงศิวภรณ์ พรหมเทศ"
-      },
-      {
-        "teacher_id": "jindapa-10",
-        "school_id": "jindapa",
-        "display_name": "ด.ต.หญิงสุภาพร ภากุล"
-      },
-      {
-        "teacher_id": "jindapa-11",
-        "school_id": "jindapa",
-        "display_name": "นางสาวอัฉริยา บุญมาวงษา"
-      },
-      {
         "teacher_id": "jindapa-12",
         "school_id": "jindapa",
         "display_name": "นายสุรชัย สิทธิจักร"
       },
       {
-        "teacher_id": "jindapa-13",
+        "teacher_id": "jindapa-01",
         "school_id": "jindapa",
-        "display_name": "ร.ต.อ.สุรชัย วงคำแผง"
+        "display_name": "นางสาวชบา โสระเวช"
+      },
+      {
+        "teacher_id": "jindapa-08",
+        "school_id": "jindapa",
+        "display_name": "นางสาวอรลภัสญา เพ็งดี"
+      },
+      {
+        "teacher_id": "jindapa-11",
+        "school_id": "jindapa",
+        "display_name": "นางสาวอัฉริยา บุญมาวงษา"
       }
     ],
     "nakrasoem": [
-      {
-        "teacher_id": "nakrasoem-01",
-        "school_id": "nakrasoem",
-        "display_name": "นางสาวศรัญญา ปาสานะโก"
-      },
-      {
-        "teacher_id": "nakrasoem-02",
-        "school_id": "nakrasoem",
-        "display_name": "นางลลิดา จารุสาร"
-      },
       {
         "teacher_id": "nakrasoem-03",
         "school_id": "nakrasoem",
@@ -571,21 +571,31 @@
         "display_name": "จ.ส.ต.วุฒิกัย ตะระแจ่ม"
       },
       {
+        "teacher_id": "nakrasoem-06",
+        "school_id": "nakrasoem",
+        "display_name": "ส.ต.อ.หญิงชุติกาญจน์ ถวิลคำ"
+      },
+      {
         "teacher_id": "nakrasoem-05",
         "school_id": "nakrasoem",
         "display_name": "นายไพฑูรย์ บางข่า"
       },
       {
-        "teacher_id": "nakrasoem-06",
+        "teacher_id": "nakrasoem-02",
         "school_id": "nakrasoem",
-        "display_name": "ส.ต.อ.หญิงชุติกาญจน์ ถวิลคำ"
+        "display_name": "นางลลิดา จารุสาร"
+      },
+      {
+        "teacher_id": "nakrasoem-01",
+        "school_id": "nakrasoem",
+        "display_name": "นางสาวศรัญญา ปาสานะโก"
       }
     ],
     "nasamakkhi": [
       {
-        "teacher_id": "nasamakkhi-01",
+        "teacher_id": "nasamakkhi-04",
         "school_id": "nasamakkhi",
-        "display_name": "ส.ต.อ.หญิงพรประวิทย์ วิเศษพงษ์"
+        "display_name": "ด.ต.รัชพล กาลเนตร"
       },
       {
         "teacher_id": "nasamakkhi-02",
@@ -593,56 +603,21 @@
         "display_name": "จ.ส.ต.หญิงดอกแก้ว ใต้สันเทียะ"
       },
       {
+        "teacher_id": "nasamakkhi-01",
+        "school_id": "nasamakkhi",
+        "display_name": "ส.ต.อ.หญิงพรประวิทย์ วิเศษพงษ์"
+      },
+      {
         "teacher_id": "nasamakkhi-03",
         "school_id": "nasamakkhi",
         "display_name": "ส.ต.ท.หญิงศศิธร ไชยสุระ"
-      },
-      {
-        "teacher_id": "nasamakkhi-04",
-        "school_id": "nasamakkhi",
-        "display_name": "ด.ต.รัชพล กาลเนตร"
       }
     ],
     "chuthit": [
       {
-        "teacher_id": "chuthit-01",
-        "school_id": "chuthit",
-        "display_name": "นายธีระวัฒน์ บุณรังศรี"
-      },
-      {
-        "teacher_id": "chuthit-02",
-        "school_id": "chuthit",
-        "display_name": "นางสาวจิตรพร มวยลี"
-      },
-      {
-        "teacher_id": "chuthit-03",
-        "school_id": "chuthit",
-        "display_name": "นางสาวธิดารินทร์ อยู่เย็น"
-      },
-      {
-        "teacher_id": "chuthit-04",
-        "school_id": "chuthit",
-        "display_name": "นายฉัตรมงคล สีหา"
-      },
-      {
         "teacher_id": "chuthit-05",
         "school_id": "chuthit",
         "display_name": "ด.ต.หญิงจินตนา สาที"
-      },
-      {
-        "teacher_id": "chuthit-06",
-        "school_id": "chuthit",
-        "display_name": "จ.ส.ต.หญิงนุชรินทร์ สาที"
-      },
-      {
-        "teacher_id": "chuthit-07",
-        "school_id": "chuthit",
-        "display_name": "จ.ส.ต.หญิงพรรณราย สุราฤทธิ์"
-      },
-      {
-        "teacher_id": "chuthit-08",
-        "school_id": "chuthit",
-        "display_name": "ส.ต.ท.หญิงดารุณี เข็มรัตน์"
       },
       {
         "teacher_id": "chuthit-09",
@@ -655,6 +630,16 @@
         "display_name": "ด.ต.หญิงทองทิพย์ อินทะเสย์"
       },
       {
+        "teacher_id": "chuthit-06",
+        "school_id": "chuthit",
+        "display_name": "จ.ส.ต.หญิงนุชรินทร์ สาที"
+      },
+      {
+        "teacher_id": "chuthit-07",
+        "school_id": "chuthit",
+        "display_name": "จ.ส.ต.หญิงพรรณราย สุราฤทธิ์"
+      },
+      {
         "teacher_id": "chuthit-11",
         "school_id": "chuthit",
         "display_name": "ส.ต.อ.หญิงพรรณราย ริยะบุตร"
@@ -663,9 +648,39 @@
         "teacher_id": "chuthit-12",
         "school_id": "chuthit",
         "display_name": "ส.ต.อ.หญิงนิภาพร ริยะบุตร"
+      },
+      {
+        "teacher_id": "chuthit-08",
+        "school_id": "chuthit",
+        "display_name": "ส.ต.ท.หญิงดารุณี เข็มรัตน์"
+      },
+      {
+        "teacher_id": "chuthit-01",
+        "school_id": "chuthit",
+        "display_name": "นายธีระวัฒน์ บุณรังศรี"
+      },
+      {
+        "teacher_id": "chuthit-04",
+        "school_id": "chuthit",
+        "display_name": "นายฉัตรมงคล สีหา"
+      },
+      {
+        "teacher_id": "chuthit-02",
+        "school_id": "chuthit",
+        "display_name": "นางสาวจิตรพร มวยลี"
+      },
+      {
+        "teacher_id": "chuthit-03",
+        "school_id": "chuthit",
+        "display_name": "นางสาวธิดารินทร์ อยู่เย็น"
       }
     ],
     "konrad": [
+      {
+        "teacher_id": "konrad-06",
+        "school_id": "konrad",
+        "display_name": "ด.ต.หญิงราตรี มุดผา"
+      },
       {
         "teacher_id": "konrad-01",
         "school_id": "konrad",
@@ -677,6 +692,11 @@
         "display_name": "จ.ส.ต.หญิงลาภิสรา แข็งแรง"
       },
       {
+        "teacher_id": "konrad-05",
+        "school_id": "konrad",
+        "display_name": "ส.ต.อ.หญิงสุวิชาดา จอมพล"
+      },
+      {
         "teacher_id": "konrad-03",
         "school_id": "konrad",
         "display_name": "ส.ต.ท.หญิงสุธิดา สันทวุฒิ"
@@ -685,16 +705,58 @@
         "teacher_id": "konrad-04",
         "school_id": "konrad",
         "display_name": "นางสาวธิดารัตน์ วงค์คำสาย"
+      }
+    ],
+    "tairom": [
+      {
+        "teacher_id": "tairom-10",
+        "school_id": "tairom",
+        "display_name": "ร.ต.ท.เด่นไชย จะโนรัตน์"
       },
       {
-        "teacher_id": "konrad-05",
-        "school_id": "konrad",
-        "display_name": "ส.ต.อ.หญิงสุวิชาดา จอมพล"
+        "teacher_id": "tairom-04",
+        "school_id": "tairom",
+        "display_name": "จ.ส.ต.หญิงเจมจิฬา บุษมงคล"
       },
       {
-        "teacher_id": "konrad-06",
-        "school_id": "konrad",
-        "display_name": "ด.ต.หญิงราตรี มุดผา"
+        "teacher_id": "tairom-01",
+        "school_id": "tairom",
+        "display_name": "ส.ต.ท.หญิงจริยา บัวระพันธ์"
+      },
+      {
+        "teacher_id": "tairom-03",
+        "school_id": "tairom",
+        "display_name": "ส.ต.ท.หญิงลภัสนันท์ ศรีมุล"
+      },
+      {
+        "teacher_id": "tairom-06",
+        "school_id": "tairom",
+        "display_name": "ส.ต.ท.ธานี สายสร้อย"
+      },
+      {
+        "teacher_id": "tairom-09",
+        "school_id": "tairom",
+        "display_name": "นางวีราภรณ์ ทองบัวบาน"
+      },
+      {
+        "teacher_id": "tairom-02",
+        "school_id": "tairom",
+        "display_name": "นางสาวธารทอง สุขรี่"
+      },
+      {
+        "teacher_id": "tairom-05",
+        "school_id": "tairom",
+        "display_name": "นางสาวเอวริน ชาวเขา"
+      },
+      {
+        "teacher_id": "tairom-07",
+        "school_id": "tairom",
+        "display_name": "นางสาวณิชาบูล สารภี"
+      },
+      {
+        "teacher_id": "tairom-08",
+        "school_id": "tairom",
+        "display_name": "นางสาวดนชิดา วงศ์ประชา"
       }
     ]
   },
@@ -748,6 +810,6 @@
     "title_text": "รายงานภาพบรรยากาศและบริบทโรงเรียน",
     "share_title": "วันเพจครูเวร",
     "share_text_template": "วันเพจ {short_name} {date_th}",
-    "data_version": "20261024"
+    "data_version": "2026102402"
   }
 }
