@@ -16,7 +16,7 @@
       "name_full": "โรงเรียนตำรวจตระเวนชายแดนค็อกนิสไทยฯ",
       "address": "ต.แมดนาท่ม อ.โคกศรีสุพรรณ จ.สกลนคร 47280",
       "province": "sn",
-      "logo_file": "",
+      "logo_file": "cocknis.v1.webp",
       "default_bg": "sn-01",
       "sort_order": 2
     },
@@ -26,7 +26,7 @@
       "name_full": "โรงเรียนตำรวจตระเวนชายแดนการท่าอากาศยานฯ",
       "address": "ต.กกตูม อ.ดงหลวง จ.มุกดาหาร",
       "province": "mdh",
-      "logo_file": "",
+      "logo_file": "airport.v1.webp",
       "default_bg": "mdh-01",
       "sort_order": 3
     },
@@ -36,7 +36,7 @@
       "name_full": "โรงเรียนตำรวจตระเวนชายแดนบ้านปากห้วยม่วง",
       "address": "ต.นาเข อ.บ้านแพง จ.นครพนม",
       "province": "np",
-      "logo_file": "",
+      "logo_file": "pakhuaymuang.v1.webp",
       "default_bg": "np-01",
       "sort_order": 4
     },
@@ -46,7 +46,7 @@
       "name_full": "โรงเรียนตำรวจตระเวนชายแดนบ้านหาดทรายเพ",
       "address": "บ้านหาดทรายเพ ต.หนองเทา อ.ท่าอุเทน จ.นครพนม",
       "province": "np",
-      "logo_file": "",
+      "logo_file": "hatsaipe.v1.webp",
       "default_bg": "np-01",
       "sort_order": 5
     },
@@ -56,7 +56,7 @@
       "name_full": "โรงเรียนตำรวจตระเวนชายแดนศาสตราจารย์แพทย์หญิงจินดาภา สายัณหวิกสิต (บ้านหนองดู่)",
       "address": "บ้านหนองดู่ ต.นาใน อ.โพนสวรรค์ จ.นครพนม",
       "province": "np",
-      "logo_file": "",
+      "logo_file": "jindapa.v1.webp",
       "default_bg": "np-01",
       "sort_order": 6
     },
@@ -66,7 +66,7 @@
       "name_full": "โรงเรียนตำรวจตระเวนชายแดนบ้านนากระเสริม",
       "address": "บ้านนากระเสริม ต.พนอม อ.ท่าอุเทน จ.นครพนม",
       "province": "np",
-      "logo_file": "",
+      "logo_file": "nakrasoem.v1.webp",
       "default_bg": "np-01",
       "sort_order": 7
     },
@@ -76,7 +76,7 @@
       "name_full": "โรงเรียนตำรวจตระเวนชายแดนบ้านนาสามัคคี",
       "address": "บ้านนาสามัคคี ต.นาทม อ.นาทม จ.นครพนม",
       "province": "np",
-      "logo_file": "",
+      "logo_file": "nasamakkhi.v1.webp",
       "default_bg": "np-01",
       "sort_order": 8
     },
@@ -86,7 +86,7 @@
       "name_full": "โรงเรียนตำรวจตระเวนชายแดนชูทิศวิทยา",
       "address": "ต.หนองเทา อ.ท่าอุเทน จ.นครพนม",
       "province": "np",
-      "logo_file": "",
+      "logo_file": "chuthit.v1.webp",
       "default_bg": "np-01",
       "sort_order": 9
     },
@@ -96,7 +96,7 @@
       "name_full": "โรงเรียนตำรวจตระเวนชายแดนคอนราดเฮงเค็ล",
       "address": "ต.นาใน อ.โพนสวรรค์ จ.นครพนม",
       "province": "np",
-      "logo_file": "",
+      "logo_file": "konrad.v1.webp",
       "default_bg": "np-01",
       "sort_order": 10
     },
@@ -106,7 +106,7 @@
       "name_full": "ศูนย์การเรียนตำรวจตระเวนชายแดนใต้ร่มพระบารมี (ธอส.อุปถัมภ์)",
       "address": "ต.บ้านค้อ อ.คำชะอี จ.มุกดาหาร",
       "province": "mdh",
-      "logo_file": "",
+      "logo_file": "tairom.v1.webp",
       "default_bg": "mdh-01",
       "sort_order": 11
     }
@@ -810,6 +810,6 @@
     "title_text": "รายงานภาพบรรยากาศและบริบทโรงเรียน",
     "share_title": "วันเพจครูเวร",
     "share_text_template": "วันเพจ {short_name} {date_th}",
-    "data_version": "2026102402"
+    "data_version": "2026102403"
   }
 }
