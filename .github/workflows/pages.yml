@@ -34,6 +34,7 @@ jobs:
         with:
           ref: main # ให้ได้ commit ล่าสุด (รวม snapshot ที่ bot เพิ่ง push)
       - uses: actions/configure-pages@v5
+      - run: node tools/stamp-version.mjs site ${GITHUB_SHA::8} # บังคับโหลดโค้ดใหม่ทุกครั้งที่ deploy
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

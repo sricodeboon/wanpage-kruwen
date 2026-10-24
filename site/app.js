@@ -121,7 +121,7 @@ async function boot() {
 
 // templates.json ล้ม → สำเนาล่าสุด (wp.templates); ไม่มีเลย → templatesAll = null (ข้อความโหลดไม่ได้ + ลองใหม่)
 async function loadTemplates() {
-  const r = await loadJsonCached({ url: 'templates.json', key: 'wp.templates', storage, fetchFn: (...a) => fetch(...a), validate: validTemplates });
+  const r = await loadJsonCached({ url: 'templates.json', key: 'wp.templates', storage, fetchFn: (...a) => fetch(...a), validate: validTemplates, fetchOpts: { cache: 'no-cache' } });
   log('templates', r.source);
   app.templatesAll = r.data;
   return r.data;
@@ -438,6 +438,12 @@ function layoutIcon(t) {
   try { rects = photoRects(t, 0); } catch { return ''; }
   const x0 = Math.min(...rects.map((r) => r.x)), y0 = Math.min(...rects.map((r) => r.y));
   const W = Math.max(...rects.map((r) => r.x + r.w)) - x0, H = Math.max(...rects.map((r) => r.y + r.h)) - y0;
+  // ฉาก side: กรอบเต็มกว้างหน้า (x 0–1024) ให้เห็นว่ารูปอยู่คอลัมน์ไหน อีกฝั่งเป็นสถานที่
+  if (t.scene === 'side-L' || t.scene === 'side-R') return layoutSvg(rects, 0, y0, 1024, H);
+  return layoutSvg(rects, x0, y0, W, H);
+}
+
+function layoutSvg(rects, x0, y0, W, H) {
   const k = 30 / W;
   const cells = rects.map((r, i) => `<rect x="${((r.x - x0) * k).toFixed(1)}" y="${((r.y - y0) * k).toFixed(1)}" width="${Math.max(1, r.w * k - 1).toFixed(1)}" height="${Math.max(1, r.h * k - 1).toFixed(1)}" rx="1.5"${i === 0 ? ' class="m"' : ''}/>`).join('');
   return `<svg class="bg-lay" viewBox="-2 -2 ${34} ${(H * k + 4).toFixed(1)}" aria-hidden="true">${cells}</svg>`;
