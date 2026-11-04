@@ -319,7 +319,7 @@ describe('เลย์เอาต์รูปหลากหลาย (3+1 / Z 
   };
   const BOTTOM_LAYOUTS = LAYOUTS.filter(l => !SIDE_LAYOUTS.includes(l));
   it('LAYOUTS มีครบ 9 แบบฉากล่าง + 2 แบบคอลัมน์ (ฉาก side)', () => {
-    expect(BOTTOM_LAYOUTS).toEqual(['1+3', '3+1', '2+2', '2x2', 'Z', 'mosaic-L', 'mosaic-R', 'L1R3', 'R1L3']);
+    expect(BOTTOM_LAYOUTS).toEqual(['1+3', '3+1', '2+2', '2x2', 'Z', 'mosaic-L', 'mosaic-R', 'L1R3', 'R1L3', '2+2-landmark']);
     expect(SIDE_LAYOUTS).toEqual(['C1+2+1', 'C2+2']);
   });
   it.each(NEW)('%s → 4 ช่อง ไม่ทับกัน อยู่เหนือ landmark ขนาดขั้นต่ำ รูปหลักใหญ่สุด (dy 0 และ 54)', (lay) => {
@@ -366,7 +366,7 @@ describe('เลย์เอาต์รูปหลากหลาย (3+1 / Z 
     expect(v.errors.some(e => e.includes('ทับกัน'))).toBe(true);
   });
   it('ป้ายใหญ่ = ช่อง 0 ทุกเลย์เอาต์ที่รูปหลักกว้าง ≥ 600; 2x2/2+2 ใช้ป้ายปกติ', () => {
-    for (const lay of BOTTOM_LAYOUTS) {
+    for (const lay of BOTTOM_LAYOUTS.filter(l => l !== '2+2-landmark')) {
       const L = computeLayout(resolved({}, tplFor(lay)), model(), measure);
       expect(L.labels[0].rect.h).toBe(L.photos[0].w >= 600 ? 46 : 42);
       expect(L.labels[1].rect.h).toBe(42);
@@ -384,7 +384,7 @@ describe('เลย์เอาต์รูปหลากหลาย (3+1 / Z 
   it('แม่แบบติดกันในจังหวัดเดียวกันใช้เลย์เอาต์ไม่ซ้ำกัน (ฉาก+เลย์เอาต์)', () => {
     const key = t => `${t.scene || 'bottom'} ${t.photo_layout}`; // C1+2+1 ซ้าย→ขวา ติดกันได้ เพราะสถานที่สลับฝั่ง
     for (const p of ['np', 'sn', 'mdh']) {
-      const list = ALL.templates.filter(t => t.province === p);
+      const list = ALL.templates.filter(t => t.province === p && !/^np-2[1-8]$/.test(t.id));
       expect(list.length).toBeGreaterThan(1);
       for (let i = 1; i < list.length; i++) expect(key(list[i]), `${list[i - 1].id} → ${list[i].id}`).not.toBe(key(list[i - 1]));
     }

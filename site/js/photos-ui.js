@@ -19,7 +19,7 @@ export function createPhotos(ctx) {
 
   const layout = () => ctx.template()?.photo_layout || '1+3';
   // 2x2/2+2 ทุกช่องกว้างเท่ากัน → เรียกตามลำดับ; แบบอื่นช่อง 0 = ภาพใหญ่ (ตำแหน่งต่างกันตามแม่แบบ)
-  const grid2 = (lay) => lay === '2x2' || lay === '2+2';
+  const grid2 = (lay) => lay === '2x2' || lay === '2+2' || lay === '2+2-landmark';
   const hintFor = (lay, i) => (grid2(lay) ? `ภาพที่ ${i + 1}` : i === 0 ? (lay === '1+3' ? 'ภาพใหญ่ (บนสุด)' : 'ภาพใหญ่') : 'ภาพเล็ก');
 
   function slotTemplate() {

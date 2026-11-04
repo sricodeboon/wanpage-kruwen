@@ -5,7 +5,7 @@ import { formatThaiDate } from './thaidate.js';
 
 const DESIGN_W = 1024;
 const DESIGN_H = 1536;
-export const LAYOUTS = ['1+3', '3+1', '2+2', '2x2', 'Z', 'mosaic-L', 'mosaic-R', 'L1R3', 'R1L3', 'C1+2+1', 'C2+2'];
+export const LAYOUTS = ['1+3', '3+1', '2+2', '2x2', 'Z', 'mosaic-L', 'mosaic-R', 'L1R3', 'R1L3', '2+2-landmark', 'C1+2+1', 'C2+2'];
 // ฉาก: bottom = สถานที่กลางล่าง (ของเดิม) / side-L, side-R = สถานที่เต็มคอลัมน์ซ้าย/ขวา รูปอยู่คอลัมน์ฝั่งตรงข้าม
 export const SCENES = ['bottom', 'side-L', 'side-R'];
 export const SIDE_LAYOUTS = ['C1+2+1', 'C2+2']; // เลย์เอาต์คอลัมน์แคบ ใช้ได้เฉพาะฉาก side
@@ -251,6 +251,20 @@ function sideGeometry(r, dy) {
 function photoGeometry(r, dy = 0) {
   if (isSide(r)) return sideGeometry(r, dy);
   const P = r.photos;
+  if (r.photo_layout === '2+2-landmark') {
+    const top = P.main.y + dy, g = P.gap, end = 790;
+    const left = P.main.x, right = P.main.x + P.main.w;
+    const upperW = (P.main.w - g) / 2;
+    const lowerX = Math.max(left + upperW + g, r.landmark.x + r.landmark.w + P.landmarkGap);
+    const lowerTop = end + g, lowerEnd = r.band.top_y - 16;
+    const lowerH = (lowerEnd - lowerTop - g) / 2;
+    return { rects: [
+      { x: left, y: top, w: upperW, h: end - top },
+      { x: left + upperW + g, y: top, w: upperW, h: end - top },
+      { x: lowerX, y: lowerTop, w: right - lowerX, h: lowerH },
+      { x: lowerX, y: lowerTop + lowerH + g, w: right - lowerX, h: lowerH },
+    ], errors: [] };
+  }
   const limit = r.landmark.y - P.landmarkGap; // ขอบล่างสุดที่รูปลงได้
   const top = P.main.y + dy;
   const cap = P.zoneCap ?? (P.small.y + P.small.h - P.main.y);
@@ -469,7 +483,11 @@ export function validateTemplate(r) {
       if (g.rects.length !== 4) errors.push(`dy ${dy}: ช่องรูปต้องมี 4 ช่อง (ได้ ${g.rects.length})`);
       g.rects.forEach((q, i) => {
         if (dy === 0) rects[`photo${i}`] = q;
-        if (!side && q.y + q.h + P.landmarkGap > r.landmark.y + 1e-6) errors.push(`dy ${dy}: รูป ${i} ทับจุดเด่น (ล่าง ${q.y + q.h})`);
+        if (!side && r.photo_layout === '2+2-landmark') {
+          const safe = { x: r.landmark.x - P.landmarkGap, y: r.landmark.y - P.landmarkGap, w: r.landmark.w + 2 * P.landmarkGap, h: r.landmark.h + P.landmarkGap };
+          if (overlaps(q, safe)) errors.push(`dy ${dy}: รูป ${i} ทับจุดเด่น`);
+          if (q.y + q.h > r.band.top_y - 16 + 1e-6) errors.push(`dy ${dy}: รูป ${i} ทับแถบครูเวร`);
+        } else if (!side && q.y + q.h + P.landmarkGap > r.landmark.y + 1e-6) errors.push(`dy ${dy}: รูป ${i} ทับจุดเด่น (ล่าง ${q.y + q.h})`);
         if (side) sideRules(r, q, i, dy, errors);
         if (dy !== 0 && !inCanvas(q)) errors.push(`dy ${dy}: photo${i} อยู่นอกภาพ 1024×1536`);
         const minH = i === 0 ? P.minMainH : P.minSmallH;

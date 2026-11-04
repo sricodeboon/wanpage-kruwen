@@ -12,7 +12,7 @@ const SNAP = JSON.parse(readFileSync(new URL('./fixtures/layout-v2.json', import
 const CHECK_V2 = JSON.parse(readFileSync(new URL('./fixtures/check-bg-v2.json', import.meta.url), 'utf8'));
 const byId = id => ALL.templates.find(t => t.id === id);
 const V3 = ALL.templates.filter(t => /-(1[1-9]|20)$/.test(t.id));
-const OLD = ALL.templates.filter(t => !V3.includes(t));
+const OLD = ALL.templates.filter(t => Object.hasOwn(SNAP, t.id));
 
 const LANDMARK = { 'side-L': { x: 0, y: 400, w: 400, h: 980 }, 'side-R': { x: 624, y: 400, w: 400, h: 980 } };
 // แม่แบบ side จากฐาน np-11 เปลี่ยนฉาก/เลย์เอาต์/แถบคลื่นได้
