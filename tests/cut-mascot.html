@@ -1,0 +1,23 @@
+<!doctype html><meta charset="utf-8"><title>ตัดมาสคอต</title>
+<body style="background:#ccc;font:14px sans-serif"><pre id="o">กำลังตัด…</pre><div id="v" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+<script type="module">
+// ตัดภาพรวม 3×2 ท่า (assets/mascot/src/sheet-v1.png) เป็นท่าละไฟล์ webp โปร่งใส แล้ว PUT กลับเข้าโฟลเดอร์ผ่าน tests/serve.py
+const names = ['wave','point','camera','lunch','thumbs','cheer'];
+const img = new Image(); img.src = '../assets/mascot/src/sheet-v1.png'; await img.decode();
+const W = img.naturalWidth, H = img.naturalHeight, c = document.createElement('canvas'); c.width = W; c.height = H;
+const x = c.getContext('2d'); x.drawImage(img, 0, 0); const d = x.getImageData(0, 0, W, H).data;
+const out = [];
+for (let r = 0; r < 2; r++) for (let col = 0; col < 3; col++) {
+  const x0 = Math.round(col * W / 3), x1 = Math.round((col + 1) * W / 3), y0 = Math.round(r * H / 2), y1 = Math.round((r + 1) * H / 2);
+  let a = 1e9, b = 1e9, e = -1, f = -1;
+  for (let y = y0; y < y1; y++) for (let xx = x0; xx < x1; xx++) if (d[(y * W + xx) * 4 + 3] > 24) { a = Math.min(a, xx); e = Math.max(e, xx); b = Math.min(b, y); f = Math.max(f, y); }
+  const p = 6; a = Math.max(x0, a - p); b = Math.max(y0, b - p); e = Math.min(x1 - 1, e + p); f = Math.min(y1 - 1, f + p);
+  const w = e - a + 1, h = f - b + 1, o = document.createElement('canvas'); o.width = w; o.height = h; o.getContext('2d').drawImage(c, a, b, w, h, 0, 0, w, h);
+  const blob = await new Promise(res => o.toBlob(res, 'image/webp', 0.9));
+  const name = names[r * 3 + col];
+  const st = (await fetch(`/assets/mascot/${name}.v1.webp`, { method: 'PUT', body: blob })).status;
+  o.style.cssText = 'height:200px;background:repeating-conic-gradient(#eee 0 25%,#fff 0 50%) 0 0/16px 16px'; document.getElementById('v').append(o);
+  out.push(`${name} ${w}x${h} ${blob.size}B → ${st}`);
+}
+document.getElementById('o').textContent = out.join('\n'); document.body.dataset.done = 1;
+</script></body>

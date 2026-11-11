@@ -1,0 +1,29 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><title>ตรวจเครื่องวาด</title>
+<link rel="stylesheet" href="../css/fonts.css"><style>body{font:16px/1.6 Kanit,sans-serif;margin:24px}</style></head>
+<body><h1>เทียบเครื่องวาดใหม่กับของเดิม (ภาพครูเวร)</h1><pre id="out">กำลังวาด…</pre>
+<script type="module">
+// เปิดผ่าน http://127.0.0.1:8765/tests/engine-check.html — ต้องได้ "เหมือนกันทุกพิกเซล" ทุกแม่แบบที่เปิดใช้
+import * as N from '../js/engine/render.js';
+import * as NL from '../js/engine/layout.js';
+import * as O from './old-engine/render.js';
+import * as OL from './old-engine/layout.js';
+import { casesFor } from './cases.mjs';
+const L = s => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error(s)); i.src = s; });
+await Promise.all([document.fonts.load('700 39px Kanit', 'รายงาน 0123'), document.fonts.load('500 24px Kanit', 'ที่อยู่ 48140')]);
+const all = await (await fetch('../data/templates.json')).json();
+const [logo, ...photos] = await Promise.all(['fixtures/logo.png', 'fixtures/photo1.jpg', 'fixtures/photo-portrait.jpg', 'fixtures/photo-square.jpg', 'fixtures/photo-exif6.jpg'].map(L));
+const mk = () => { const c = document.createElement('canvas'); c.width = 1536; c.height = 2304; return c.getContext('2d', { willReadFrequently: true }); };
+const a = mk(), b = mk(); let n = 0; const bad = [];
+for (const t of all.templates.filter(x => x.active !== false)) {
+  const bg = await L('../' + t.file);
+  for (const k of casesFor(t.id)) {
+    a.clearRect(0, 0, 1536, 2304); b.clearRect(0, 0, 1536, 2304);
+    N.renderOnePage(a, k.model, NL.mergeTemplate(all.common, t), 1.5, { bg, logo, photos });
+    O.renderOnePage(b, k.model, OL.mergeTemplate(all.common, t), 1.5, { bg, logo, photos });
+    const x = a.getImageData(0, 0, 1536, 2304).data, y = b.getImageData(0, 0, 1536, 2304).data;
+    let d = 0; for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) d++;
+    n++; if (d) bad.push(`${k.name}: ต่าง ${d} ค่า`);
+  }
+}
+document.getElementById('out').textContent = bad.length ? `ต่างกัน ${bad.length}/${n} ภาพ\n` + bad.join('\n') : `เหมือนกันทุกพิกเซล ${n}/${n} ภาพ`;
+</script></body></html>

@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>บันทึกพื้นหลังหน้าแถว</title>
+<!-- ใช้ตอนพัฒนาเท่านั้น: วางภาพจาก ChatGPT ไว้ที่ tests/tmp/<theme>.png แล้วเปิดหน้านี้ ?t=<theme>
+     → ย่อ/ครอปเป็น 1024×1536 แล้ว PUT ไป assets/assembly/<theme>.v1.webp (ต้องเปิดผ่าน python tests/serve.py) -->
+<body style="font:16px sans-serif;margin:16px">
+<p id="st">กำลังทำ…</p>
+<img id="pv" style="width:256px;border:1px solid #ccc">
+<script type="module">
+const t = new URLSearchParams(location.search).get('t');
+const st = document.getElementById('st');
+try {
+  const img = new Image(); img.src = `tmp/${t}.png?${Date.now()}`; await img.decode();
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 1536;
+  const k = Math.max(1024 / img.naturalWidth, 1536 / img.naturalHeight);
+  const sw = 1024 / k, sh = 1536 / k;
+  c.getContext('2d').drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, 0, 0, 1024, 1536);
+  const blob = await new Promise(r => c.toBlob(r, 'image/webp', 0.9));
+  const res = await fetch(`/assets/assembly/${t}.v1.webp`, { method: 'PUT', body: blob });
+  document.getElementById('pv').src = URL.createObjectURL(blob);
+  st.textContent = `${t}: ${img.naturalWidth}×${img.naturalHeight} → 1024×1536 webp ${Math.round(blob.size / 1024)} KB · HTTP ${res.status}`;
+} catch (e) { st.textContent = 'ผิดพลาด: ' + e.message; }
+</script>

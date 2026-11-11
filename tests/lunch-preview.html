@@ -1,0 +1,19 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><title>ตัวอย่างรายงานอาหารกลางวัน</title>
+<link rel="stylesheet" href="../css/fonts.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap">
+<style>body{margin:0;background:#555;display:flex;gap:12px;padding:12px;flex-wrap:wrap}canvas{width:360px;height:540px;background:#fff}</style></head>
+<body><script type="module">
+// หน้าทดสอบ: วาดรายงานอาหารกลางวันทุกสี ด้วยข้อความแบบรายงานจริง (ข้อมูลตัวอย่าง)
+import { renderLunch, LUNCH_THEMES } from '../js/engine/lunch.js';
+const L = s => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = s; });
+await Promise.all(['400 29px Sarabun','500 29px Sarabun','600 29px Sarabun','700 40px Kanit','500 27px Kanit'].map(f => document.fonts.load(f, 'เรียน ๑๒ 12')));
+const [logo, ...photos] = await Promise.all(['fixtures/logo.png','fixtures/photo1.jpg','fixtures/photo-portrait.jpg','fixtures/photo-square.jpg','fixtures/photo-exif6.jpg'].map(L));
+const model = { title: 'รายงานการประกอบเลี้ยงอาหารกลางวัน', dateISO: '2026-11-11',
+  school: { name_full: 'โรงเรียนตำรวจตระเวนชายแดนช่างกลปทุมวันอนุสรณ์ 8' },
+  menu: ['ข้าวสวย', 'ผัดเผ็ด', 'ผัดแตงกวา', 'แตงโม'], message: '',
+  lunch: { to: 'ผู้บังคับบัญชา', line1: 'ครูใหญ่ รร.ตชด.ช่างกลปทุมวันอนุสรณ์ 8', line2: 'ต.ดอนเตย อ.นาทม จ.นครพนม สังกัด กก.ตชด.23', email: 'school@example.com', phone: '080-000-0000', thaiNum: true } };
+const variants = Object.keys(LUNCH_THEMES).map(k => ({ ...model, lunch: { ...model.lunch, theme: k } }));
+variants.push({ ...model, menu: ['ข้าวสวย','แกงเขียวหวานไก่ใส่มะเขือ','ผัดผักรวมมิตรหมูสับ','ไข่พะโล้','ส้มเขียวหวาน','นมจืด'], message: 'นักเรียนรับประทานอาหาร 45 คน ครูดูแลความเรียบร้อย', lunch: { ...model.lunch, theme: 'magenta', email: '' } });
+for (const m of variants) { const t = LUNCH_THEMES[m.lunch.theme]; const bg = t.file ? await L('../' + t.file).catch(() => null) : null; const c = document.createElement('canvas'); c.width = 1024; c.height = 1536; document.body.append(c); renderLunch(c.getContext('2d'), m, 1, { logo, photos, bg }); }
+document.body.dataset.done = 1;
+</script></body></html>

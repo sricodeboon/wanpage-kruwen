@@ -1,0 +1,577 @@
+// เลย์เอาต์ภาพรายงาน 1 หน้า — pure ไม่แตะ DOM
+// พิกัดทั้งหมดเป็นหน่วยออกแบบ 1024×1536; ค่าคงที่มาจาก templates.json.common (+ overrides ต่อแบบ)
+// measure(text, font, weight) → ความกว้างข้อความ (ตอนรันจริงใช้ ctx.measureText, ตอนทดสอบใช้ stub)
+import { formatThaiDate } from './thaidate.js';
+
+const DESIGN_W = 1024;
+const DESIGN_H = 1536;
+export const LAYOUTS = ['1+3', '3+1', '2+2', '2x2', 'Z', 'mosaic-L', 'mosaic-R', 'L1R3', 'R1L3', '2+2-landmark', 'C1+2+1', 'C2+2'];
+// ฉาก: bottom = สถานที่กลางล่าง (ของเดิม) / side-L, side-R = สถานที่เต็มคอลัมน์ซ้าย/ขวา รูปอยู่คอลัมน์ฝั่งตรงข้าม
+export const SCENES = ['bottom', 'side-L', 'side-R'];
+export const SIDE_LAYOUTS = ['C1+2+1', 'C2+2']; // เลย์เอาต์คอลัมน์แคบ ใช้ได้เฉพาะฉาก side
+const MAIN_LABEL_MIN_W = 600; // ป้ายใหญ่เฉพาะรูปหลักที่กว้างพอ (2x2/2+2 กว้าง 455.75 ใช้ป้ายปกติ)
+const PROVINCES = ['np', 'sn', 'mdh'];
+const KEEP = ['id', 'version', 'active', 'name', 'province', 'scene', 'landmark', 'band', 'file', 'thumb', 'approvedAt'];
+
+const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+const clone = v => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
+const isSide = r => r.scene === 'side-L' || r.scene === 'side-R';
+
+function deepMerge(target, src) {
+  for (const [k, v] of Object.entries(src || {})) {
+    if (isObj(v) && isObj(target[k])) deepMerge(target[k], v);
+    else target[k] = clone(v);
+  }
+  return target;
+}
+
+export function mergeTemplate(common, tpl) {
+  const out = clone(common) || {};
+  for (const k of KEEP) if (tpl[k] !== undefined) out[k] = clone(tpl[k]);
+  out.palette = clone(tpl.palette) || {};
+  out.photo_layout = tpl.photo_layout || '1+3';
+  out.scene = tpl.scene || 'bottom';
+  deepMerge(out, tpl.overrides);
+  // ฉาก side ที่ไม่ระบุ landmark → คอลัมน์มาตรฐาน side.landmark ชิดขอบฝั่งสถานที่ (ฉาก bottom ไม่แตะ)
+  if (isSide(out) && !out.landmark && out.side?.landmark) {
+    const L = out.side.landmark;
+    out.landmark = { x: out.scene === 'side-L' ? 0 : DESIGN_W - L.w, y: L.y, w: L.w, h: L.h };
+  }
+  return out;
+}
+
+// ---------- ข้อความไทย ----------
+
+// สระบน/ล่าง วรรณยุกต์ ต้องติดกับพยัญชนะหน้า ห้ามขึ้นบรรทัดใหม่ด้วยตัวเหล่านี้
+const isCombining = ch => {
+  const c = ch.codePointAt(0);
+  return c === 0x0e31 || (c >= 0x0e34 && c <= 0x0e3a) || (c >= 0x0e47 && c <= 0x0e4e);
+};
+
+// ห้ามขึ้นบรรทัดด้วย ะ า ำ ๅ และห้ามจบบรรทัดด้วยสระหน้า เ แ โ ใ ไ
+const isFollowVowel = ch => ['ะ', 'า', 'ำ', 'ๅ'].includes(ch);
+const isLeadVowel = ch => { const c = ch.codePointAt(0); return c >= 0x0e40 && c <= 0x0e44; };
+const canBreakAt = (text, i) => i > 0 && i < text.length
+  && !isCombining(text[i]) && !isFollowVowel(text[i]) && !isLeadVowel(text[i - 1]);
+
+// ตัวตัดคำไทยของเบราว์เซอร์ (Chrome/Safari/Node full-ICU); ไม่มี → null แล้วใช้กติกาตัวอักษร
+const DEFAULT_SEGMENTER = typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function'
+  ? new Intl.Segmenter('th', { granularity: 'word' }) : null;
+
+// ตำแหน่งขอบคำ (index ใน text) ที่ตัดได้ — ภายใน 1..len-1 และผ่านกติกาสระ
+export function wordBoundaries(text, segmenter = DEFAULT_SEGMENTER) {
+  if (!segmenter) return [];
+  const out = [];
+  for (const { index } of segmenter.segment(text)) {
+    if (index > 0 && canBreakAt(text, index)) out.push(index);
+  }
+  return out;
+}
+
+// แบ่ง 2 บรรทัดที่ฟอนต์ font ตามลำดับ:
+// 1) ช่องว่างใกล้กลางที่สุด ที่ทั้งสองครึ่งพอดี maxW
+// 2) ขอบคำไทย (Intl.Segmenter) ที่ทั้งสองครึ่งพอดีและกว้างสมดุลที่สุด
+// 3) ขอบตัวอักษรที่สมดุลที่สุด (ไม่มี Segmenter หรือไม่มีขอบคำที่พอดี)
+function splitTwo(measure, text, font, weight, maxW, segmenter) {
+  const mid = text.length / 2;
+  const fits = s => measure(s, font, weight) <= maxW;
+  let best = null;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] !== ' ') continue;
+    const a = text.slice(0, i).trim(), b = text.slice(i + 1).trim();
+    if (!a || !b || !fits(a) || !fits(b)) continue;
+    if (!best || Math.abs(i - mid) < Math.abs(best.i - mid)) best = { i, lines: [a, b] };
+  }
+  if (best) return best.lines;
+  const cost = i => Math.max(measure(text.slice(0, i).trim(), font, weight), measure(text.slice(i).trim(), font, weight));
+  let bestWord = null;
+  for (const i of wordBoundaries(text, segmenter)) {
+    const a = text.slice(0, i).trim(), b = text.slice(i).trim();
+    if (!a || !b || !fits(a) || !fits(b)) continue;
+    const c = cost(i);
+    if (!bestWord || c < bestWord.c) bestWord = { c, lines: [a, b] };
+  }
+  if (bestWord) return bestWord.lines;
+  let bestCost = Infinity, lines = [text];
+  for (let i = 1; i < text.length; i++) {
+    if (!canBreakAt(text, i)) continue;
+    const a = text.slice(0, i).trim(), b = text.slice(i).trim();
+    if (!a || !b) continue;
+    const c = cost(i);
+    if (c < bestCost) { bestCost = c; lines = [a, b]; }
+  }
+  return lines;
+}
+
+// segmenter: ไม่ส่ง = Intl.Segmenter('th') ถ้ามี; null = ปิด (ใช้กติกาตัวอักษร)
+export function fitText(measure, text, { maxW, font, minFont, weight = 700, maxLines = 2, segmenter = DEFAULT_SEGMENTER }) {
+  const t = String(text ?? '').trim();
+  for (let f = font; f >= minFont; f--) {
+    if (measure(t, f, weight) <= maxW) return { font: f, lines: [t] };
+  }
+  if (maxLines < 2) return { font: minFont, lines: [t] };
+  return { font: minFont, lines: splitTwo(measure, t, minFont, weight, maxW, segmenter) };
+}
+
+// ตัดท้ายด้วย "…" ให้พอดี maxW (ไม่ตัดกลางสระ/วรรณยุกต์)
+function ellipsize(measure, text, font, weight, maxW) {
+  if (measure(text, font, weight) <= maxW) return text;
+  for (let n = text.length - 1; n > 0; n--) {
+    if (isCombining(text[n])) continue;
+    const s = text.slice(0, n).trimEnd() + '…';
+    if (measure(s, font, weight) <= maxW) return s;
+  }
+  return '…';
+}
+
+// ยศบรรทัดแรก ชื่อ-สกุลบรรทัดสอง: "ส.ต.ท.รัชเดช ศรีแก้ว" → ["ส.ต.ท.", "รัชเดช ศรีแก้ว"]
+export function splitRank(name) {
+  const t = String(name ?? '').trim();
+  const m = t.match(/^((?:[ก-ฮ][ก-๎]{0,3}\.)+)\s*([ก-ฮเ-ไ].*)$/u);
+  if (m) return [m[1], m[2].trim()];
+  const sp = t.indexOf(' ');
+  return sp > 0 ? [t.slice(0, sp), t.slice(sp + 1).trim()] : [t];
+}
+
+// ---------- ช่องรูป ----------
+
+// แถวบน/ล่าง: แบ่ง a = H − g ตาม ratio แล้วบังคับขั้นต่ำ (ล่าง ≥ minSmallH ก่อน แล้วบน ≥ minMainH)
+function rows2(P, H, ratio, errors) {
+  const a = H - P.gap;
+  let up = a * ratio, lo = a - up;
+  if (lo < P.minSmallH) { lo = P.minSmallH; up = a - lo; }
+  if (up < P.minMainH) { up = P.minMainH; lo = a - up; }
+  if (up < P.minMainH || lo < P.minSmallH) {
+    errors.push(`พื้นที่รูป ${a} ไม่พอ (ต้อง ≥ ${P.minMainH + P.minSmallH})`);
+    up = Math.max(0, a * ratio); lo = Math.max(0, a - up);
+  }
+  return [up, lo];
+}
+
+// เลย์เอาต์ทั้งหมด — ช่อง 0 = รูปหลัก (อาคารเรียน) ใหญ่สุดเสมอ, ช่อง 1–3 เรียงซ้าย→ขวา บน→ล่าง
+// กรอบร่วม: x 46..978, บน = main.y + dy, ล่าง = min(landmark − 16, บน + zoneCap) (L1R3/R1L3 ใช้ถึง landmark − 16)
+const GEOM = {
+  '1+3': (P, f, errors) => {
+    let mainH = P.main.h;
+    let smallY = P.small.y + f.dy;
+    let smallH = Math.min(P.small.h, f.limit - smallY);
+    if (smallH < P.minSmallH) {
+      const cut = Math.min(P.minSmallH - smallH, mainH - P.minMainH);
+      if (cut > 0) { mainH -= cut; smallY -= cut; smallH = Math.min(P.small.h, f.limit - smallY); }
+    }
+    if (smallH < P.minSmallH) errors.push(`รูปเล็กสูง ${smallH} < ${P.minSmallH} (landmark.y ${f.landmarkY})`);
+    return [{ x: P.main.x, y: f.top, w: P.main.w, h: mainH },
+      ...P.small.xs.map(x => ({ x, y: smallY, w: P.small.w, h: smallH }))];
+  },
+  // แถวรูปเล็ก 3 ช่องบน + รูปหลักเต็มกว้างล่าง
+  '3+1': (P, f, errors) => {
+    const a = f.H - f.g;
+    const sh = Math.max(P.minSmallH, Math.round(a * P.ratio['3+1']));
+    const mh = a - sh;
+    if (mh < P.minMainH) errors.push(`รูปหลักสูง ${mh} < ${P.minMainH} (landmark.y ${f.landmarkY})`);
+    return [{ x: f.x0, y: f.top + sh + f.g, w: f.W, h: mh },
+      ...P.small.xs.map(x => ({ x, y: f.top, w: P.small.w, h: sh }))];
+  },
+  '2+2': (P, f, errors) => grid2(f, rows2(P, f.H, P.topRatio2plus2, errors)),
+  '2x2': (P, f, errors) => grid2(f, rows2(P, f.H, 0.5, errors)),
+  // ซิกแซก: บน ใหญ่ซ้าย+เล็กขวา / ล่าง เล็กซ้าย+ใหญ่ขวา
+  Z: (P, f, errors) => {
+    const [up, lo] = rows2(P, f.H, P.ratio.Z, errors);
+    const bw = P.bigW, sw = f.W - f.g - bw, y2 = f.top + up + f.g;
+    return [{ x: f.x0, y: f.top, w: bw, h: up }, { x: f.x0 + bw + f.g, y: f.top, w: sw, h: up },
+      { x: f.x0, y: y2, w: sw, h: lo }, { x: f.x0 + sw + f.g, y: y2, w: bw, h: lo }];
+  },
+  // บน: รูปหลัก + เล็กแนวตั้ง (L = หลักซ้าย, R = หลักขวา) / ล่าง: เล็ก 2 ช่องเท่ากัน
+  'mosaic-L': (P, f, errors) => mosaic(P, f, errors, false),
+  'mosaic-R': (P, f, errors) => mosaic(P, f, errors, true),
+  // รูปหลักสูงเต็มโซน + 3 รูปเล็กซ้อนแนวตั้ง — ใช้ได้เฉพาะ landmark ต่ำ (โซน ≥ minSideZone)
+  L1R3: (P, f, errors) => column3(P, f, errors, false),
+  R1L3: (P, f, errors) => column3(P, f, errors, true),
+  // ---- คอลัมน์แคบ (ฉาก side) — f.x0/f.W = คอลัมน์รูป, f.H = ถึง band.top_y − bandGap ----
+  // รูปหลักบน / คู่กลาง / กว้างล่าง: a = H − 2g แบ่งตาม side.ratioC1
+  'C1+2+1': (P, f, errors) => {
+    if (!f.side) { errors.push('C1+2+1 ใช้ได้เฉพาะฉาก side-L/side-R'); return []; }
+    const a = f.H - 2 * f.g, R = f.side.ratioC1;
+    const mh = Math.round(a * R.main), ph = Math.round(a * R.pair), wh = a - mh - ph;
+    if (mh < P.minMainH || ph < P.minSmallH || wh < P.minSmallH) {
+      errors.push(`พื้นที่รูป ${a} ไม่พอ (หลัก ${mh} ≥ ${P.minMainH}, คู่ ${ph}/กว้าง ${wh} ≥ ${P.minSmallH})`);
+    }
+    const cw = (f.W - f.g) / 2, y1 = f.top + mh + f.g, y2 = y1 + ph + f.g;
+    return [{ x: f.x0, y: f.top, w: f.W, h: Math.max(0, mh) },
+      { x: f.x0, y: y1, w: cw, h: Math.max(0, ph) }, { x: f.x0 + cw + f.g, y: y1, w: cw, h: Math.max(0, ph) },
+      { x: f.x0, y: y2, w: f.W, h: Math.max(0, wh) }];
+  },
+  // ตาราง 2×2 ชิดบน แถวสูงไม่เกิน side.maxRowC2x2 (กันช่องรูปเป็นแนวตั้งผิดธรรมชาติ)
+  'C2+2': (P, f, errors) => {
+    if (!f.side) { errors.push('C2+2 ใช้ได้เฉพาะฉาก side-L/side-R'); return []; }
+    const row = Math.min((f.H - f.g) / 2, f.side.maxRowC2x2);
+    if (row < P.minMainH) errors.push(`แถวรูปสูง ${row} < ${P.minMainH}`);
+    return grid2(f, [Math.max(0, row), Math.max(0, row)]);
+  },
+};
+
+function grid2(f, [up, lo]) {
+  const cw = (f.W - f.g) / 2, y2 = f.top + up + f.g;
+  return [
+    { x: f.x0, y: f.top, w: cw, h: up }, { x: f.x0 + cw + f.g, y: f.top, w: cw, h: up },
+    { x: f.x0, y: y2, w: cw, h: lo }, { x: f.x0 + cw + f.g, y: y2, w: cw, h: lo },
+  ];
+}
+
+function mosaic(P, f, errors, mainRight) {
+  const [up, lo] = rows2(P, f.H, P.ratio.mosaic, errors);
+  const bw = P.bigW, sw = f.W - f.g - bw, cw = (f.W - f.g) / 2, y2 = f.top + up + f.g;
+  const main = { x: mainRight ? f.x0 + sw + f.g : f.x0, y: f.top, w: bw, h: up };
+  const side = { x: mainRight ? f.x0 : f.x0 + bw + f.g, y: f.top, w: sw, h: up };
+  return [main, side, { x: f.x0, y: y2, w: cw, h: lo }, { x: f.x0 + cw + f.g, y: y2, w: cw, h: lo }];
+}
+
+function column3(P, f, errors, mainRight) {
+  const H = f.limit - f.top; // ไม่ใช้ zoneCap — ใช้ความสูงทั้งหมดถึง landmark
+  if (H < P.minSideZone) errors.push(`โซนรูปสูง ${H} < ${P.minSideZone} ใช้ ${mainRight ? 'R1L3' : 'L1R3'} ไม่ได้ (landmark.y ${f.landmarkY})`);
+  const sw = P.sideW, mw = f.W - f.g - sw, sh = Math.max(0, (H - 2 * f.g) / 3);
+  const sx = mainRight ? f.x0 : f.x0 + mw + f.g;
+  return [{ x: mainRight ? f.x0 + sw + f.g : f.x0, y: f.top, w: mw, h: Math.max(0, H) },
+    ...[0, 1, 2].map(i => ({ x: sx, y: f.top + i * (sh + f.g), w: sw, h: sh }))];
+}
+
+// ฉาก side: คอลัมน์รูปอยู่ฝั่งตรงข้ามสถานที่ เว้น gutter; ล่างสุด = band.top_y − bandGap (ไม่ใช้ zoneCap)
+function sideGeometry(r, dy) {
+  const P = r.photos, S = r.side, lm = r.landmark;
+  const errors = [];
+  if (!S) return { rects: [], errors: ['ไม่มี common.side สำหรับฉาก ' + r.scene] };
+  const top = P.main.y + dy;
+  const limit = r.band.top_y - S.bandGap;
+  const x0 = r.scene === 'side-L' ? lm.x + lm.w + S.gutter : lm.x - S.gutter - S.colW;
+  const f = { dy, top, limit, landmarkY: lm.y, x0, W: S.colW, g: P.gap, H: limit - top, side: S };
+  const rects = (GEOM[r.photo_layout] || GEOM['C1+2+1'])(P, f, errors);
+  return { rects, errors };
+}
+
+function photoGeometry(r, dy = 0) {
+  if (isSide(r)) return sideGeometry(r, dy);
+  const P = r.photos;
+  if (r.photo_layout === '2+2-landmark') {
+    const top = P.main.y + dy, g = P.gap, end = 790;
+    const left = P.main.x, right = P.main.x + P.main.w;
+    const upperW = (P.main.w - g) / 2;
+    const lowerX = Math.max(left + upperW + g, r.landmark.x + r.landmark.w + P.landmarkGap);
+    const lowerTop = end + g, lowerEnd = r.band.top_y - 16;
+    const lowerH = (lowerEnd - lowerTop - g) / 2;
+    return { rects: [
+      { x: left, y: top, w: upperW, h: end - top },
+      { x: left + upperW + g, y: top, w: upperW, h: end - top },
+      { x: lowerX, y: lowerTop, w: right - lowerX, h: lowerH },
+      { x: lowerX, y: lowerTop + lowerH + g, w: right - lowerX, h: lowerH },
+    ], errors: [] };
+  }
+  const limit = r.landmark.y - P.landmarkGap; // ขอบล่างสุดที่รูปลงได้
+  const top = P.main.y + dy;
+  const cap = P.zoneCap ?? (P.small.y + P.small.h - P.main.y);
+  const bottom = Math.min(limit, top + cap);
+  const f = { dy, top, limit, landmarkY: r.landmark.y, x0: P.main.x, W: P.main.w, g: P.gap, H: bottom - top };
+  const errors = [];
+  const rects = (GEOM[r.photo_layout] || GEOM['1+3'])(P, f, errors);
+  return { rects, errors };
+}
+
+export function photoRects(resolved, dy = 0) {
+  return photoGeometry(resolved, dy).rects;
+}
+
+// ---------- เลย์เอาต์เต็มหน้า ----------
+
+function logoRect(L, size) {
+  if (size && size.w > 0 && size.h > 0) {
+    const k = Math.min(L.maxW / size.w, L.maxH / size.h);
+    const w = size.w * k, h = size.h * k;
+    return { x: (DESIGN_W - w) / 2, y: L.top, w, h };
+  }
+  return { x: (DESIGN_W - L.maxW) / 2, y: L.top, w: L.maxW, h: L.maxH };
+}
+
+function labelFor(measure, C, photo, item, isMain) {
+  if (!item || !item.label) return null;
+  const h = isMain ? C.mainH : C.h;
+  const font0 = isMain ? C.mainFont : C.font;
+  const circle = h - 10;
+  const chrome = C.padL + circle + C.gap + C.padR;
+  const maxText = photo.w - 2 * C.offset - chrome;
+  const fit = fitText(measure, item.label, { maxW: maxText, font: font0, minFont: C.minFont, maxLines: 1 });
+  const text = ellipsize(measure, fit.lines[0], fit.font, 700, maxText);
+  const w = chrome + measure(text, fit.font, 700);
+  return {
+    rect: { x: photo.x + C.offset, y: photo.y + photo.h - C.offset - h, w, h },
+    font: fit.font, text, icon: item.icon ?? null, circle,
+  };
+}
+
+const hasPhone = t => Boolean(t && String(t.phone ?? '').trim());
+
+function dutyLayout(measure, D, model) {
+  const teachers = (model.teachers || []).slice(0, 3);
+  const variant = Math.max(1, teachers.length);
+  const V = D.variants[String(variant)];
+  const headerText = 'ครูเวรประจำวันที่ ' + formatThaiDate(model.dateISO);
+  const headerFit = fitText(measure, headerText, {
+    maxW: V.w - 2 * D.headerPadX, font: V.header.font, minFont: D.headerMinFont, maxLines: 1,
+  });
+  let h = V.h;
+  let cols;
+  const cxBox = V.x + V.w / 2;
+
+  if (variant === 1) {
+    const t = teachers[0] || { display_name: '' };
+    const name = String(t.display_name ?? '').trim();
+    const phone = hasPhone(t) ? String(t.phone).trim() : null;
+    const P = V.phone;
+    const phoneW = f => (phone ? P.icon + P.iconGap + measure(phone, f, 700) : 0);
+    const rowW = (nf, pf) => measure(name, nf, 700) + (phone ? V.rowGap + phoneW(pf) : 0);
+    let nf = V.name.font, pf = P.font;
+    while (rowW(nf, pf) > V.rowMaxW && (nf > V.name.minFont || pf > P.minFont)) {
+      if (nf > V.name.minFont) nf--;
+      if (pf > P.minFont) pf--;
+    }
+    if (rowW(nf, pf) <= V.rowMaxW || !phone) { // ไม่มีเบอร์ = ไม่ต้องแยกบรรทัด
+      const total = rowW(nf, pf);
+      const start = cxBox - total / 2;
+      const nw = measure(name, nf, 700);
+      cols = [{
+        name: { font: nf, lines: [name], y: V.name.dy, cx: start + nw / 2 },
+        phone: phone ? { font: pf, y: P.dy, text: phone, cx: start + nw + V.rowGap + phoneW(pf) / 2, w: phoneW(pf), icon: P.icon, iconGap: P.iconGap } : null,
+      }];
+    } else {
+      // ชื่อบรรทัด 1 เบอร์บรรทัด 2
+      h = V.twoLine.h;
+      const nfit = fitText(measure, name, { maxW: V.rowMaxW, font: V.name.font, minFont: V.name.minFont, maxLines: 1 });
+      const pfit = fitText(measure, phone, { maxW: V.rowMaxW - P.icon - P.iconGap, font: P.font, minFont: P.minFont, maxLines: 1 });
+      cols = [{
+        name: { font: nfit.font, lines: nfit.lines, y: V.twoLine.nameDy, cx: cxBox },
+        phone: { font: pfit.font, y: V.twoLine.phoneDy, text: phone, cx: cxBox, w: phoneW(pfit.font), icon: P.icon, iconGap: P.iconGap },
+      }];
+    }
+  } else {
+    const maxW = V.colW - 2 * V.colPad;
+    const names = teachers.map(t => String(t.display_name ?? '').trim());
+    // ฟอนต์เดียวกันทุกคอลัมน์ = ขนาดใหญ่สุดที่ทุกชื่อพอดี
+    let nf = V.name.font;
+    while (nf > V.name.minFont && names.some(n => measure(n, nf, 700) > maxW)) nf--;
+    const needSplit = names.map(n => measure(n, nf, 700) > maxW);
+    const twoLine = variant === 3 && V.twoLine && needSplit.some(Boolean);
+    if (twoLine) h = V.twoLine.h;
+    cols = teachers.map((t, i) => {
+      const cx = V.x + V.colXs[i] + V.colW / 2;
+      let name;
+      if (twoLine && needSplit[i]) name = { font: nf, lines: splitRank(names[i]), y: [...V.twoLine.nameDy], cx };
+      else name = { font: nf, lines: [names[i]], y: twoLine ? V.twoLine.singleDy : V.name.dy, cx };
+      const P = V.phone;
+      const phone = hasPhone(t)
+        ? { font: P.font, y: twoLine ? V.twoLine.phoneDy : P.dy, text: String(t.phone).trim(), cx,
+          w: P.icon + P.iconGap + measure(String(t.phone).trim(), P.font, 700), icon: P.icon, iconGap: P.iconGap }
+        : null;
+      return { name, phone };
+    });
+  }
+
+  const y = DESIGN_H - D.bottom - h;
+  for (const c of cols) {
+    c.name.y = Array.isArray(c.name.y) ? c.name.y.map(v => y + v) : y + c.name.y;
+    if (c.phone) c.phone.y = y + c.phone.y;
+  }
+  return {
+    rect: { x: V.x, y, w: V.w, h },
+    variant,
+    header: { font: headerFit.font, y: y + V.header.dy, text: headerText },
+    cols,
+    // เส้นคั่นอยู่กึ่งกลางช่องว่างระหว่างคอลัมน์
+    dividers: variant > 1 ? V.colXs.slice(1, variant).map((cx, i) => V.x + (V.colXs[i] + V.colW + cx) / 2) : [],
+  };
+}
+
+/**
+ * @typedef {{x:number,y:number,w:number,h:number}} Rect
+ * @typedef {{rect:Rect, font:number, lines:string[]}} TextBox
+ * @typedef {Object} Layout
+ * @property {Rect} logo
+ * @property {TextBox} title
+ * @property {TextBox} school
+ * @property {TextBox|null} address  null เมื่อโรงเรียนไม่มีที่อยู่ (ไม่วาด pill และไม่เพิ่ม dy)
+ * @property {number} dy  ระยะที่ทุกอย่างใต้ป้ายโรงเรียนเลื่อนลง (0 / 26 / 28 / 54)
+ * @property {Rect[]} photos  4 ช่องตาม photo_layout
+ * @property {({rect:Rect,font:number,text:string,icon:string|null,circle:number}|null)[]} labels
+ * @property {{rect:Rect, variant:number, header:{font:number,y:number,text:string},
+ *   cols:{name:{font:number,lines:string[],y:number|number[],cx:number},
+ *         phone:({font:number,y:number,text:string,cx:number,w:number,icon:number,iconGap:number}|null)}[],
+ *   dividers:number[]}} duty
+ * @property {string[]} warnings  ปัญหาเรขาคณิตตอนรัน (เช่น รูปเล็กเตี้ยกว่า minSmallH เมื่อ dy มาก) — ว่าง = ปกติ
+ */
+
+/** @returns {Layout} */
+export function computeLayout(resolved, model, measure) {
+  const r = resolved;
+  const s = model.school || {};
+  let dy = 0;
+
+  const title = fitText(measure, model.title, { maxW: r.title.maxW, font: r.title.font, minFont: r.title.minFont, maxLines: 1 });
+
+  const S = r.school;
+  const sf = fitText(measure, s.name_full, { maxW: S.maxW, font: S.font, minFont: S.minFont });
+  const sTwo = sf.lines.length > 1;
+  const school = { rect: { x: S.x, y: S.y, w: S.w, h: sTwo ? S.twoLineH : S.h }, font: sf.font, lines: sf.lines };
+  if (sTwo) dy += S.twoLineDy;
+
+  let address = null;
+  const A = r.address;
+  if (String(s.address ?? '').trim()) {
+    const af = fitText(measure, s.address, { maxW: A.maxW, font: A.font, minFont: A.minFont, weight: 500 });
+    const aTwo = af.lines.length > 1;
+    const textW = Math.max(...af.lines.map(l => measure(l, af.font, 500)));
+    const w = textW + A.pin.w + A.pin.gap + A.padX;
+    address = { rect: { x: (DESIGN_W - w) / 2, y: A.y + dy, w, h: aTwo ? A.twoLineH : A.h }, font: af.font, lines: af.lines };
+    if (aTwo) dy += A.twoLineDy;
+  }
+
+  const { rects: photos, errors: warnings } = photoGeometry(r, dy);
+  const items = model.photos || [];
+  // ฉาก side: ช่องคู่แคบ 266.75 → ใช้ค่าป้ายของ common.side.label ทับ (แม่แบบเดิมได้ r.label เดิมทุกค่า)
+  const LC = isSide(r) && r.side?.label ? { ...r.label, ...r.side.label } : r.label;
+  const labels = photos.map((p, i) => labelFor(measure, LC, p, items[i], i === 0 && p.w >= MAIN_LABEL_MIN_W));
+
+  return {
+    logo: logoRect(r.logo, model.logoSize),
+    title: { rect: { x: r.title.x, y: r.title.y, w: r.title.w, h: r.title.h }, font: title.font, lines: title.lines },
+    school,
+    address,
+    dy,
+    photos,
+    labels,
+    duty: dutyLayout(measure, r.duty, model),
+    warnings,
+  };
+}
+
+// ---------- ตรวจแม่แบบ ----------
+
+const overlaps = (a, b) => a.x < b.x + b.w - 1e-6 && b.x < a.x + a.w - 1e-6 && a.y < b.y + b.h - 1e-6 && b.y < a.y + a.h - 1e-6;
+const inCanvas = q => q.x >= 0 && q.y >= 0 && q.x + q.w <= DESIGN_W + 1e-6 && q.y + q.h <= DESIGN_H + 1e-6;
+
+export function validateTemplate(r) {
+  const errors = [];
+  const scene = r.scene ?? 'bottom', side = isSide(r);
+  if (!SCENES.includes(scene)) errors.push(`scene "${scene}" ไม่ถูกต้อง`);
+  if (!LAYOUTS.includes(r.photo_layout)) errors.push(`photo_layout "${r.photo_layout}" ไม่ถูกต้อง`);
+  else if (side !== SIDE_LAYOUTS.includes(r.photo_layout)) {
+    errors.push(side ? `ฉาก ${scene} ต้องใช้ ${SIDE_LAYOUTS.join('/')} (ได้ "${r.photo_layout}")`
+      : `photo_layout "${r.photo_layout}" ใช้ได้เฉพาะฉาก side-L/side-R`);
+  }
+  if (!PROVINCES.includes(r.province)) errors.push(`province "${r.province}" ไม่ถูกต้อง`);
+  if (!r.landmark || !r.band) {
+    errors.push('ไม่มี landmark/band');
+    return { ok: false, errors };
+  }
+
+  const rects = { logo: logoRect(r.logo), title: r.title, school: { ...r.school, h: Math.max(r.school.h, r.school.twoLineH || 0) },
+    address: { x: (DESIGN_W - r.address.maxW) / 2, y: r.address.y, w: r.address.maxW, h: r.address.h } };
+
+  if (LAYOUTS.includes(r.photo_layout)) {
+    // ตรวจทั้งกรณีปกติ (dy 0) และกรณีเลื่อนมากสุด (ชื่อโรงเรียน 2 บรรทัด + ที่อยู่ 2 บรรทัด)
+    const maxDy = (r.school.twoLineDy || 0) + (r.address.twoLineDy || 0);
+    for (const dy of [0, maxDy]) {
+      const g = photoGeometry(r, dy);
+      errors.push(...g.errors.map(e => `dy ${dy}: ${e}`));
+      const P = r.photos, minW = P.minSmallW ?? 0, area = q => q.w * q.h;
+      if (g.rects.length !== 4) errors.push(`dy ${dy}: ช่องรูปต้องมี 4 ช่อง (ได้ ${g.rects.length})`);
+      g.rects.forEach((q, i) => {
+        if (dy === 0) rects[`photo${i}`] = q;
+        if (!side && r.photo_layout === '2+2-landmark') {
+          const safe = { x: r.landmark.x - P.landmarkGap, y: r.landmark.y - P.landmarkGap, w: r.landmark.w + 2 * P.landmarkGap, h: r.landmark.h + P.landmarkGap };
+          if (overlaps(q, safe)) errors.push(`dy ${dy}: รูป ${i} ทับจุดเด่น`);
+          if (q.y + q.h > r.band.top_y - 16 + 1e-6) errors.push(`dy ${dy}: รูป ${i} ทับแถบครูเวร`);
+        } else if (!side && q.y + q.h + P.landmarkGap > r.landmark.y + 1e-6) errors.push(`dy ${dy}: รูป ${i} ทับจุดเด่น (ล่าง ${q.y + q.h})`);
+        if (side) sideRules(r, q, i, dy, errors);
+        if (dy !== 0 && !inCanvas(q)) errors.push(`dy ${dy}: photo${i} อยู่นอกภาพ 1024×1536`);
+        const minH = i === 0 ? P.minMainH : P.minSmallH;
+        if (q.h < minH - 1e-6) errors.push(`dy ${dy}: รูป ${i} สูง ${q.h} < ${minH}`);
+        if (q.w < minW - 1e-6) errors.push(`dy ${dy}: รูป ${i} กว้าง ${q.w} < ${minW}`);
+        if (i > 0 && area(q) > area(g.rects[0]) + 1e-6) errors.push(`dy ${dy}: รูป ${i} ใหญ่กว่ารูปหลัก`);
+        for (let j = 0; j < i; j++) if (overlaps(q, g.rects[j])) errors.push(`dy ${dy}: รูป ${j} กับรูป ${i} ทับกัน`);
+      });
+    }
+  }
+
+  if (side) {
+    // สถานที่ต้องอยู่ใต้ที่อยู่ 2 บรรทัด (โรงเรียน 2 บรรทัด + ที่อยู่ 2 บรรทัด) และไม่ทับข้อความส่วนหัว
+    const headBottom = r.address.y + (r.school.twoLineDy || 0) + Math.max(r.address.h, r.address.twoLineH || 0);
+    if (r.landmark.y < headBottom - 1e-6) errors.push(`landmark.y ${r.landmark.y} < ${headBottom} (ทับที่อยู่ 2 บรรทัด)`);
+    for (const k of ['logo', 'title', 'school', 'address']) {
+      if (overlaps(r.landmark, rects[k])) errors.push(`landmark ทับ ${k}`);
+    }
+    // คอลัมน์สถานที่ต้องชิดขอบฝั่งของฉาก และไม่ลงไปทับกล่องครูเวรบนแถบคลื่น
+    const lm = r.landmark;
+    if (scene === 'side-L' && lm.x !== 0) errors.push(`side-L: landmark.x ต้องเป็น 0 (ได้ ${lm.x})`);
+    if (scene === 'side-R' && Math.abs(lm.x + lm.w - DESIGN_W) > 1e-6) errors.push(`side-R: landmark.x+w ต้องเป็น ${DESIGN_W} (ได้ ${lm.x + lm.w})`);
+    if (lm.y + lm.h > r.band.top_y + 4) errors.push(`landmark ล่าง ${lm.y + lm.h} > band.top_y+4 ${r.band.top_y + 4} (ทับกล่องครูเวร)`);
+  }
+
+  const D = r.duty;
+  for (const [k, V] of Object.entries(D.variants)) {
+    const hMax = Math.max(V.h, V.twoLine?.h || 0);
+    rects[`duty${k}`] = { x: V.x, y: DESIGN_H - D.bottom - hMax, w: V.w, h: hMax };
+  }
+  if (DESIGN_H - D.bottom - D.maxH < r.band.top_y - 4) {
+    errors.push(`กล่องครูเวรสูงเกินแถบคลื่น (ขอบบน ${DESIGN_H - D.bottom - D.maxH} < band.top_y−4 ${r.band.top_y - 4})`);
+  }
+
+  for (const [k, q] of Object.entries(rects)) {
+    if (!inCanvas(q)) errors.push(`${k} อยู่นอกภาพ 1024×1536`);
+  }
+  return { ok: errors.length === 0, errors };
+}
+
+// กฎช่องรูปของฉาก side (spec v3 §1.5 ข้อ 2–3): อยู่ในคอลัมน์ฝั่งตรงข้ามสถานที่ เว้น gutter และอยู่เหนือแถบคลื่น
+function sideRules(r, q, i, dy, errors) {
+  if (!r.side) return; // ไม่มี common.side → sideGeometry รายงาน error แล้ว
+  const S = r.side, lm = r.landmark, M = r.photos.main;
+  // ขอบกระดาษเดียวกับแม่แบบเดิม (x 46–978) — กัน overrides.side ที่แก้ไม่ครบจนรูปชิดขอบภาพ
+  if (q.x < M.x - 1e-6 || q.x + q.w > M.x + M.w + 1e-6) errors.push(`dy ${dy}: รูป ${i} เลยขอบกระดาษ ${M.x}–${M.x + M.w} (x ${q.x}–${q.x + q.w})`);
+  if (r.scene === 'side-L' && q.x < lm.x + lm.w + S.gutter - 1e-6) errors.push(`dy ${dy}: รูป ${i} ล้ำคอลัมน์สถานที่ซ้าย (x ${q.x})`);
+  if (r.scene === 'side-R' && q.x + q.w > lm.x - S.gutter + 1e-6) errors.push(`dy ${dy}: รูป ${i} ล้ำคอลัมน์สถานที่ขวา (ขวา ${q.x + q.w})`);
+  if (overlaps(q, lm)) errors.push(`dy ${dy}: รูป ${i} ทับสถานที่`);
+  if (q.y + q.h + S.bandGap > r.band.top_y + 1e-6) errors.push(`dy ${dy}: รูป ${i} ทับแถบคลื่น (ล่าง ${q.y + q.h})`);
+}
+
+export function filterTemplates(templates, province) {
+  const list = Array.isArray(templates)
+    ? templates
+    : (templates.templates || []).map(t => mergeTemplate(templates.common, t));
+  return list.filter(t => t.active !== false && t.province === province);
+}
+
+// ---------- กล่องล่างแบบ "อาหารกลางวัน" (ระบบใหม่) ----------
+// ใช้กรอบกว้างแบบครูเวร 3 คน (x 70, w 884) สูงสุด maxH — อยู่บนแถบคลื่นเหมือนกล่องครูเวรทุกแม่แบบ
+// บรรทัด: หัว (ทอง) · เมนู (ขาวหนา, 1–2 บรรทัด) · ข้อความ (1 บรรทัด ถ้ามี)
+export function lunchLayout(measure, D, model) {
+  const V = D.variants['3'];
+  const h = D.maxH;
+  const y = DESIGN_H - D.bottom - h;
+  const headerText = (model.lunchHeader || 'อาหารกลางวันประจำวันที่') + ' ' + formatThaiDate(model.dateISO);
+  const hf = fitText(measure, headerText, { maxW: V.w - 2 * D.headerPadX, font: 26, minFont: D.headerMinFont, maxLines: 1 });
+  const items = (model.menu || []).map(s => String(s ?? '').trim()).filter(Boolean);
+  const menuText = items.length ? items.join('  ·  ') : 'ยังไม่ได้ใส่เมนู';
+  const msg = String(model.message ?? '').trim();
+  const maxW = V.w - 2 * 28;
+  let menu, note = null;
+  if (msg) {
+    const mf = fitText(measure, menuText, { maxW, font: 30, minFont: 20, maxLines: 1 });
+    menu = { font: mf.font, lines: [ellipsize(measure, mf.lines[0], mf.font, 700, maxW)], ys: [y + 71] };
+    const nf = fitText(measure, msg, { maxW, font: 23, minFont: 17, weight: 500, maxLines: 1 });
+    note = { font: nf.font, text: ellipsize(measure, nf.lines[0], nf.font, 500, maxW), y: y + 109 };
+  } else {
+    // ยอมขึ้น 2 บรรทัดที่ 26px ก่อนจะย่อเหลือบรรทัดเดียวตัวเล็ก
+    let mf = fitText(measure, menuText, { maxW, font: 31, minFont: 26, maxLines: 2 });
+    if (mf.lines.some(l => measure(l, mf.font, 700) > maxW)) mf = fitText(measure, menuText, { maxW, font: 25, minFont: 20, maxLines: 2 });
+    const lines = mf.lines.map(l => ellipsize(measure, l.replace(/^[\s·]+|[\s·]+$/g, ''), mf.font, 700, maxW));
+    menu = { font: mf.font, lines, ys: lines.length > 1 ? [y + 69, y + 106] : [y + 88] };
+  }
+  return { rect: { x: V.x, y, w: V.w, h }, header: { font: hf.font, y: y + 28, text: headerText }, menu, note };
+}

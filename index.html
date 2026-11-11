@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>วันเพจ</title>
+<meta name="description" content="แตะที่ภาพรายงานเพื่อแก้ไข สร้างภาพวันเพจครูเวรและอาหารกลางวัน แล้วส่งเข้า LINE">
+<meta name="theme-color" content="#2E0F5C">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-48.png" sizes="48x48">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body data-mode="duty">
+
+<!-- แถบบน: โรงเรียน · วันที่ -->
+<header class="bar">
+  <div class="bar-in">
+    <button class="school-chip" id="schoolBtn" type="button" aria-label="เปลี่ยนโรงเรียน">
+      <span class="crest" id="schoolLogo"></span>
+      <span class="school-txt"><b id="schoolShort">เลือกโรงเรียน</b><small id="schoolAddr">แตะเพื่อเลือก</small></span>
+    </button>
+    <button class="date-chip" type="button" id="dateChip" aria-haspopup="dialog" aria-label="เปลี่ยนวันที่รายงาน">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4m8-4v4"/></svg>
+      <span><small id="dateHead">ครูเวรประจำวันที่</small><b id="bigDate">—</b></span>
+    </button>
+  </div>
+</header>
+
+<div class="inapp" id="inappNote" hidden>
+  <span>เปิดจากในแอป LINE อยู่ ปุ่มแชร์อาจใช้ไม่ได้</span>
+  <a id="extLink" href="#">เปิดในเบราว์เซอร์</a>
+</div>
+
+<!-- เวที: ภาพรายงานคือตัวแก้ไข -->
+<main class="studio" id="studio">
+  <p class="sr" id="ready" aria-live="polite"></p>
+  <div class="paper" id="paper">
+    <canvas id="cv" width="1024" height="1536" aria-label="ภาพรายงาน แตะส่วนต่าง ๆ เพื่อแก้ไข"></canvas>
+    <div class="hots" id="hots"></div>
+  </div>
+  <p class="tip">แตะส่วนใดของภาพเพื่อแก้ไข · ภาพจริง 1536 × 2304 px</p>
+</main>
+
+<!-- แถบล่างลอย -->
+<nav class="dock" aria-label="เครื่องมือ">
+  <div class="seg" role="tablist" aria-label="ประเภทรายงาน" id="modeSeg">
+    <span class="ind" aria-hidden="true"></span>
+    <button type="button" role="tab" data-mode="duty" aria-selected="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8.5c.6-3.6 3.5-6 7-6s6.4 2.4 7 6"/></svg><span>ครูเวร</span></button>
+    <button type="button" role="tab" data-mode="assembly" aria-selected="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V3m0 1h12l-2.5 4L17 12H5"/></svg><span>หน้าแถว</span></button>
+    <button type="button" role="tab" data-mode="lunch" aria-selected="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18a9 8 0 0 1-18 0Zm5-8v5m4-6v6m4-5v5M7 21h10"/></svg><span>อาหาร</span></button>
+  </div>
+  <button class="tool" type="button" id="btnBg" aria-label="เปลี่ยนพื้นหลัง">
+    <span class="tool-ic" id="bgThumb"></span><span class="tool-t">พื้นหลัง</span></button>
+  <label class="tool" for="f-multi" aria-label="ใส่รูปหลายรูปพร้อมกัน">
+    <span class="tool-ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/><circle cx="8" cy="10" r="1.6"/><path d="m17 16-4-4-7 7"/></svg></span><span class="tool-t">ใส่รูป</span></label>
+  <input class="sr" type="file" id="f-multi" accept="image/*" multiple>
+  <button class="go" type="button" data-gen>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3c-1.3 0-2.5-.3-3.6-.8L4 20.5l1.4-4.2A8.1 8.1 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5Z"/></svg>
+    <span class="go-txt"><span class="go-t">ส่ง LINE</span><small class="gen-s"></small></span><span class="bar-p"></span></button>
+</nav>
+<input class="sr" type="file" id="f-one" accept="image/*" aria-hidden="true" tabindex="-1">
+
+<!-- ===== แผงแก้ไข: ล่างบนมือถือ / ขวาบนคอม ===== -->
+<div class="sheet" id="sheetPhoto" role="dialog" aria-modal="true" aria-labelledby="photoTitle" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-panel">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-h"><h2 id="photoTitle">รูปที่ 1</h2><button class="icon-btn" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="photo-prev"><img id="photoPrev" alt=""></div>
+    <div class="row2">
+      <button class="btn btn-soft" type="button" id="btnPhotoChange"><svg viewBox="0 0 24 24"><path d="M4 8h3l1.5-2.5h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg>เปลี่ยนรูป</button>
+      <button class="btn" type="button" id="btnPhotoDel"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3m-7 0 1 13h8l1-13"/></svg>เอารูปออก</button>
+    </div>
+    <div class="only-duty grid">
+      <h3 class="sub">ป้ายชื่อบนรูป</h3>
+      <div class="label-list" id="labelList"></div>
+      <form class="add-row" id="labelCustom">
+        <input class="input" id="f-labelText" maxlength="40" placeholder="พิมพ์ป้ายชื่อเอง" autocomplete="off">
+        <button class="btn btn-primary" type="submit">ใช้</button>
+      </form>
+      <button class="btn btn-ghost" type="button" id="btnNoLabel">ไม่ใส่ป้ายชื่อ</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="sheetChat" role="dialog" aria-modal="true" aria-labelledby="chatTitle" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-panel chat-panel">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-h"><img class="chat-head-av" src="assets/mascot/wave.v1.webp" alt=""><h2 id="chatTitle">คุยกับครูแจ็ก</h2>
+      <button class="btn btn-ghost btn-sm chat-clear" type="button" id="chatClear">เริ่มใหม่</button>
+      <button class="icon-btn" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="chat-log" id="chatLog" role="log" aria-live="polite"></div>
+    <div class="chips chat-chips" id="chatChips"></div>
+    <form class="chat-form" id="chatForm" autocomplete="off">
+      <input class="input" id="chatIn" maxlength="200" placeholder="พิมพ์ถามครูแจ็ก เช่น เบอร์ครูวิทยา" aria-label="ข้อความถึงครูแจ็ก" enterkeyhint="send">
+      <button class="btn btn-primary chat-send" type="submit" aria-label="ส่งข้อความ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 20 4l-6 16-3-7-7-1Z"/></svg></button>
+    </form>
+  </div>
+</div>
+
+<div class="sheet" id="sheetDate" role="dialog" aria-modal="true" aria-labelledby="dTitle" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-panel">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-h"><h2 id="dTitle">วันที่รายงาน</h2><button class="icon-btn" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <p class="cal-picked" id="calPicked" aria-live="polite"></p>
+    <div class="chips cal-quick" id="calQuick"></div>
+    <div class="cal">
+      <div class="cal-nav">
+        <button class="icon-btn" type="button" id="calPrev" aria-label="เดือนก่อน"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <b id="calMonth" aria-live="polite"></b>
+        <button class="icon-btn" type="button" id="calNext" aria-label="เดือนถัดไป"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+      <div class="cal-grid" id="calGrid" role="grid" aria-labelledby="calMonth"></div>
+    </div>
+    <button class="btn btn-primary btn-block" type="button" data-close>เสร็จ</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheetTeachers" role="dialog" aria-modal="true" aria-labelledby="tTitle" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-panel">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-h"><h2 id="tTitle">ครูเวรวันนี้</h2><span class="hint" id="dutyCount"></span><button class="icon-btn" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <p class="note">แตะชื่อเพื่อเลือก สูงสุด 3 คนตามลำดับที่แตะ · แตะรูปดินสอเพื่อแก้ชื่อ · เบอร์โทรแก้ได้ จำไว้ให้ครั้งหน้า</p>
+    <div class="teachers" id="teachers" role="list"></div>
+    <form class="add-row" id="addTeacher">
+      <input class="input" id="f-newTeacher" placeholder="เพิ่มชื่อครูที่ไม่มีในรายการ" autocomplete="off">
+      <button class="btn" type="submit">เพิ่ม</button>
+    </form>
+    <button class="btn btn-primary btn-block" type="button" data-close>เสร็จ</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheetMenu" role="dialog" aria-modal="true" aria-labelledby="mTitle" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-panel">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-h"><h2 id="mTitle">เมนูอาหารวันนี้</h2><button class="icon-btn" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="menu-list" id="menuList"></div>
+    <button class="btn btn-soft" type="button" id="btnAddMenu"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>เพิ่มเมนู</button>
+    <div class="field">
+      <label for="f-message">ข้อความเพิ่มเติม <small>(ไม่บังคับ ต่อท้ายรายการเมนู)</small></label>
+      <input class="input" id="f-message" maxlength="120" placeholder="เช่น นักเรียนรับประทานอาหาร 45 คน">
+      <div class="chips" id="msgChips"></div>
+    </div>
+    <button class="btn btn-primary btn-block" type="button" data-close>เสร็จ</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheetItems" role="dialog" aria-modal="true" aria-labelledby="iTitle" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-panel">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-h"><h2 id="iTitle">ข้อรายงานหน้าแถว</h2><span class="hint">ขอรายงานการ ปบ. ดังนี้</span><button class="icon-btn" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="menu-list" id="itemList"></div>
+    <button class="btn btn-soft" type="button" id="btnAddItem"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>เพิ่มข้อ</button>
+    <div class="field"><span class="lbl">ข้อความที่ใช้บ่อย <small>(แตะเพื่อเพิ่ม)</small></span><div class="chips" id="itemChips"></div></div>
+    <button class="btn btn-primary btn-block" type="button" data-close>เสร็จ</button>
+  </div>
+</div>
+<div class="sheet" id="sheetMemo" role="dialog" aria-modal="true" aria-labelledby="memoTitle" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-panel" id="memoCard">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-h"><h2 id="memoTitle">หนังสือรายงาน</h2><span class="hint">จำไว้ให้ครั้งหน้า</span><button class="icon-btn" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="field"><label for="l-to">เรียน</label><input class="input" id="l-to" data-l="to" placeholder="ผู้บังคับบัญชา"></div>
+    <div class="field m-asm"><label for="l-reporter">ผู้รายงาน <small>(ข้าฯ ยศ ชื่อ ตำแหน่ง โรงเรียน)</small></label><input class="input" id="l-reporter" data-l="reporter"></div>
+    <div class="field m-lunch"><label for="l-line1">ชื่อและตำแหน่งผู้รับ</label><input class="input" id="l-line1" data-l="line1"></div>
+    <div class="field m-lunch"><label for="l-line2">ที่อยู่ / สังกัด</label><input class="input" id="l-line2" data-l="line2"></div>
+    <div class="grid-2">
+      <div class="field"><label for="l-email">อีเมล</label><input class="input" id="l-email" data-l="email" inputmode="email" autocomplete="email"></div>
+      <div class="field"><label for="l-phone">โทร</label><input class="input" id="l-phone" data-l="phone" inputmode="tel" autocomplete="tel"></div>
+    </div>
+    <label class="mini-switch"><input type="checkbox" id="l-thaiNum" data-l="thaiNum"> ใช้เลขไทย (๑ ๒ ๓)</label>
+    <button class="btn btn-primary btn-block" type="button" data-close>เสร็จ</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheetTitle" role="dialog" aria-modal="true" aria-labelledby="ttTitle" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-panel">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-h"><h2 id="ttTitle">หัวเรื่องบนภาพ</h2><button class="icon-btn" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="field">
+      <label for="f-title">ข้อความหัวเรื่อง</label>
+      <input class="input" id="f-title" maxlength="60">
+      <small>เว้นว่างไว้ = ใช้หัวเรื่องมาตรฐาน</small>
+    </div>
+    <button class="btn btn-primary btn-block" type="button" data-close>เสร็จ</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheetBg" role="dialog" aria-modal="true" aria-labelledby="bgTitle" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-panel">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-h"><h2 id="bgTitle">พื้นหลัง</h2>
+      <label class="mini-switch only-duty"><input type="checkbox" id="f-allProv"> ทุกจังหวัด</label>
+      <button class="icon-btn" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="only-duty"><div class="tpls" id="tpls" role="radiogroup" aria-label="เลือกพื้นหลัง"></div><p class="note" id="tplName"></p></div>
+    <div class="only-lunch"><div class="lthemes" id="lthemes" role="radiogroup" aria-label="สีของรายงาน"></div></div>
+  </div>
+</div>
+
+<div class="sheet" id="schoolSheet" role="dialog" aria-modal="true" aria-labelledby="schoolTitle" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-panel">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-h"><h2 id="schoolTitle">เลือกโรงเรียน</h2><button class="icon-btn" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="school-list" id="schoolList"></div>
+    <details class="more" id="customBox">
+      <summary>โรงเรียนอื่น (กรอกเอง)</summary>
+      <form class="grid" id="customForm">
+        <div class="field"><label for="c-name">ชื่อโรงเรียนเต็ม</label><input class="input" id="c-name" required></div>
+        <div class="grid-2">
+          <div class="field"><label for="c-short">ชื่อย่อ</label><input class="input" id="c-short" placeholder="ใช้ตั้งชื่อไฟล์"></div>
+          <div class="field"><label for="c-prov">จังหวัด (ชุดพื้นหลัง)</label>
+            <select class="input" id="c-prov"><option value="np">นครพนม</option><option value="sn">สกลนคร</option><option value="mdh">มุกดาหาร</option></select></div>
+        </div>
+        <div class="field"><label for="c-addr">ที่อยู่</label><input class="input" id="c-addr"></div>
+        <div class="row">
+          <span class="school-logo lg" id="c-logoPrev"></span>
+          <label class="btn btn-soft" for="c-logo">เลือกตราโรงเรียน</label>
+          <input class="sr" type="file" id="c-logo" accept="image/*">
+        </div>
+        <button class="btn btn-primary" type="submit">ใช้โรงเรียนนี้</button>
+      </form>
+    </details>
+  </div>
+</div>
+
+<div class="sheet center" id="resultSheet" role="dialog" aria-modal="true" aria-labelledby="resTitle" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-panel">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-h">
+      <svg class="check" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="22"/><path d="m13 22.5 6 6 12-13"/></svg>
+      <div><h2 id="resTitle">ภาพรายงานพร้อมส่ง</h2><p class="meta" id="resMeta"></p></div>
+      <button class="icon-btn" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="printer"><img id="resImg" alt="ภาพรายงานที่สร้างแล้ว"></div>
+    <div class="actions">
+      <button class="btn btn-line btn-lg" type="button" id="btnShare">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3c-1.3 0-2.5-.3-3.6-.8L4 20.5l1.4-4.2A8.1 8.1 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5Z"/></svg>
+        ส่งเข้า LINE</button>
+      <button class="btn" type="button" id="btnSave"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 19h16"/></svg>บันทึกรูป</button>
+      <button class="btn" type="button" id="btnCopy"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>คัดลอกข้อความ</button>
+    </div>
+    <p class="note" id="resTip"></p>
+  </div>
+</div>
+
+<!-- ครูแจ็ก: มาสคอตผู้ช่วย -->
+<aside class="buddy" id="buddy" aria-label="ครูแจ็ก ผู้ช่วย">
+  <button class="buddy-btn" id="buddyBtn" type="button" aria-label="ครูแจ็ก"><img id="buddyImg" src="assets/mascot/wave.v1.webp" alt="" width="160" height="200"></button>
+  <div class="bubble" id="bubble">
+    <button class="bubble-x" id="bubbleX" type="button" aria-label="ซ่อนคำแนะนำ"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <b id="bubbleT">สวัสดีครับ</b><span id="bubbleS"></span>
+    <div class="bubble-row"><button class="bubble-go" id="bubbleGo" type="button" hidden></button><button class="bubble-ask" id="bubbleAsk" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4V5Z"/></svg>ถามครูแจ็ก</button></div>
+  </div>
+</aside>
+<canvas class="confetti" id="confetti" aria-hidden="true" hidden></canvas>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
